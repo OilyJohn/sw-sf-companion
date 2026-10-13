@@ -11,6 +11,7 @@ import ShipPage from './pages/ShipPage.jsx';
 import TraitsPage from './pages/TraitsPage.jsx';
 import ScenariosPage from './pages/ScenariosPage.jsx';
 import SharedBattlePage from './pages/SharedBattlePage.jsx';
+import DocumentsPage from './pages/DocumentsPage.jsx';
 
 const NAV = [
   { section: 'Squad Management', links: [
@@ -23,6 +24,7 @@ const NAV = [
     { to: '/rules/scenarios', label: 'Scenarios' },
     { to: '/rules', label: 'Rules Reference', end: true },
   ] },
+  { section: 'Documents & Resources', links: [{ to: '/documents', label: 'PDFs' }] },
 ];
 
 export default function App() {
@@ -71,6 +73,7 @@ export default function App() {
           <Route path="/rules" element={<RulesPage />} />
           <Route path="/rules/traits" element={<TraitsPage />} />
           <Route path="/rules/scenarios" element={<ScenariosPage />} />
+          <Route path="/documents" element={<DocumentsPage />} />
         </Routes>
       </main>
     </div>
