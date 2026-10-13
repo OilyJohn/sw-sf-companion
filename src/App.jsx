@@ -11,6 +11,7 @@ import ShipPage from './pages/ShipPage.jsx';
 import TraitsPage from './pages/TraitsPage.jsx';
 import ScenariosPage from './pages/ScenariosPage.jsx';
 import SharedBattlePage from './pages/SharedBattlePage.jsx';
+import WeaponsPage from './pages/WeaponsPage.jsx';
 import DocumentsPage from './pages/DocumentsPage.jsx';
 
 const NAV = [
@@ -22,6 +23,7 @@ const NAV = [
   { section: 'Rules Clarifications', links: [
     { to: '/rules/traits', label: 'Traits' },
     { to: '/rules/scenarios', label: 'Scenarios' },
+    { to: '/rules/weapons', label: 'Weapons and Gear' },
     { to: '/rules', label: 'Gameplay Rules', end: true },
   ] },
   { section: 'Documents & Resources', links: [{ to: '/documents', label: 'PDFs' }] },
@@ -73,6 +75,7 @@ export default function App() {
           <Route path="/rules" element={<RulesPage />} />
           <Route path="/rules/traits" element={<TraitsPage />} />
           <Route path="/rules/scenarios" element={<ScenariosPage />} />
+          <Route path="/rules/weapons" element={<WeaponsPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
         </Routes>
       </main>
