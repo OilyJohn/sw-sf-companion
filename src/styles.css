@@ -118,3 +118,5 @@ details summary { cursor: pointer; color: var(--accent); padding: 6px 0; }
 .popup { width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto; border: 1px solid var(--accent); }
 .popup h2 { margin: 0; color: var(--accent); }
 @keyframes popup-fade { from { opacity: 0; } }
+.scenario-para { margin: 0 0 6px; }
+.scenario-list { margin: 0 0 6px; padding-left: 1.2em; display: grid; gap: 2px; }

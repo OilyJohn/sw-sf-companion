@@ -9,6 +9,7 @@ import BattlePage from './pages/BattlePage.jsx';
 import RulesPage from './pages/RulesPage.jsx';
 import ShipPage from './pages/ShipPage.jsx';
 import TraitsPage from './pages/TraitsPage.jsx';
+import ScenariosPage from './pages/ScenariosPage.jsx';
 
 const NAV = [
   { section: 'Squad Management', links: [
@@ -18,6 +19,7 @@ const NAV = [
   { section: 'During a Battle', links: [{ to: '/battle', label: 'Battle Tracker' }] },
   { section: 'Rules Clarifications', links: [
     { to: '/rules/traits', label: 'Traits' },
+    { to: '/rules/scenarios', label: 'Scenarios' },
     { to: '/rules', label: 'Rules Reference', end: true },
   ] },
 ];
@@ -66,6 +68,7 @@ export default function App() {
           <Route path="/battle/:id" element={<BattlePage />} />
           <Route path="/rules" element={<RulesPage />} />
           <Route path="/rules/traits" element={<TraitsPage />} />
+          <Route path="/rules/scenarios" element={<ScenariosPage />} />
         </Routes>
       </main>
     </div>
