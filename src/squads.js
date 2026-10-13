@@ -55,6 +55,7 @@ export function newUnit(profile, name) {
     traits: [], // gained traits: { name, pts }
     equipment: [],
     exp: 0,
+    promotions: 0, // promotion rolls taken; one is due per full box of 5 EXP
     status: 'ready',
     pending: [],
     notes: '',

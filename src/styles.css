@@ -82,3 +82,25 @@ input, select, textarea {
   .topbar, .content { margin-left: var(--sidebar-w); }
   .topbar .icon-btn { display: none; }
 }
+
+.banner { display: block; text-align: center; margin-top: 12px; }
+.check { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: .95rem; }
+.check input { width: 22px; height: 22px; flex: none; }
+.counter { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+.counter .count { min-width: 2ch; text-align: center; font-size: 1.1rem; }
+.step { width: 40px; height: 40px; border-radius: 10px; background: var(--panel-2); font-size: 1.3rem; line-height: 1; }
+.small-btn { padding: 8px 12px; font-size: .85rem; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.roll-input { display: grid; grid-template-columns: auto auto 1fr auto; gap: 8px; align-items: center; }
+.roll-input input { min-width: 0; }
+.sub { padding: 10px 0; border-top: 1px solid var(--border); display: grid; gap: 8px; }
+.sub:first-of-type { border-top: 0; }
+.wrap { flex-wrap: wrap; }
+
+.section-head { all: unset; display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; cursor: pointer; }
+.trait-list { display: grid; gap: 0; margin-top: 10px; }
+.trait { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--border); }
+.roll { display: inline-block; min-width: 4.2em; margin-right: 6px; color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
+.amended { color: var(--hero); }
+.levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
+.level { background: var(--panel-2); border-radius: 8px; padding: 6px; display: grid; gap: 2px; text-align: center; }
