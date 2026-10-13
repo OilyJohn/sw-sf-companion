@@ -115,6 +115,7 @@ function RemoveNegativeTask({ unit, onDone }) {
 
 function FormTask({ unit, spec, onDone }) {
   const [form, setForm] = useState(null);
+  const [popup, setPopup] = useState(false);
   const level = form ? formLevel(unit, form) : 0;
   const gained = form && level < 3 ? form.levels[level].map(parseFormTrait) : [];
 
@@ -130,7 +131,13 @@ function FormTask({ unit, spec, onDone }) {
           ))}
         </select>
       ) : form === null && (
-        <RollInput dice="D8" min={1} max={8} onRoll={n => setForm(LIGHTSABER_FORMS.find(f => f.roll === n))} />
+        <RollInput dice="D8" min={1} max={8} onRoll={n => { setForm(LIGHTSABER_FORMS.find(f => f.roll === n)); setPopup(true); }} />
+      )}
+      {popup && form && (
+        <ResultPopup heading={`Rolled ${form.roll}: ${form.name}`} onClose={() => setPopup(false)}
+          items={level >= 3
+            ? [{ title: form.name, text: `${unit.name} is already at level III, so re-roll.` }]
+            : gained.map(g => ({ title: `${g.name} (${g.pts} pts)`, text: findTrait(g.name)?.text ?? `Level ${LEVELS[level]} of ${form.name}.` }))} />
       )}
       {form && (level >= 3
         ? <div className="warn small">{form.name} is already at level III, so re-roll.</div>

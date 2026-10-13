@@ -159,6 +159,7 @@ function PromotionRoll({ unit, squad, onApply }) {
     ? (force ? FORCE_HERO_PROMOTION : HERO_PROMOTION)
     : (force ? FORCE_REGULAR_PROMOTION : REGULAR_PROMOTION);
   const [roll, setRoll] = useState(null);
+  const [popup, setPopup] = useState(false);
   const res = roll === null ? null : lookup(table, roll);
   const options = res ? promotionOptions(res, unit, squad) : null;
 
@@ -169,9 +170,10 @@ function PromotionRoll({ unit, squad, onApply }) {
         <span className="muted small">{unit.exp} EXP · {table.name}</span>
       </div>
       {res === null ? (
-        <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={setRoll} />
+        <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={n => { setRoll(n); setPopup(true); }} />
       ) : (
         <div className="stack">
+          {popup && <ResultPopup heading={`${unit.name} rolled ${roll} on ${table.name}`} items={[{ title: res.name, text: res.text }]} onClose={() => setPopup(false)} />}
           <div><b>{roll}: {res.name}.</b> <span className="small">{res.text}</span></div>
           {options === null && <div className="warn small">Can't take this result here, so re-roll.</div>}
           <div className="row gap wrap">
