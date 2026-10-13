@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import SignInGate from '../components/SignInGate.jsx';
+import TodoTask from '../components/TodoTask.jsx';
 import { MAX_FORCE_WIELDERS, MAX_HEROES } from '../data/factions.js';
 import { UNCONFIRMED_SLOTS, slotsOf, slotsUsed } from '../data/equipment.js';
 import { FORCE_UNITS, ROLE_BONUS, findProfile, getFaction } from '../data/rules.js';
@@ -155,7 +156,13 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEquip, onRemove }) {
         <span>EXP <b>{unit.exp}</b></span>
       </div>
       {!open && st.traits.length > 0 && <div className="small"><span className="muted">Traits: </span>{st.traits.join(', ')}</div>}
-      {unit.pending?.length > 0 && unit.pending.map(p => <div key={p} className="warn small">To do: {p}</div>)}
+      {unit.pending?.length > 0 && (mine
+        ? unit.pending.map((p, i) => (
+          <TodoTask key={i + p} unit={unit} squad={squad} text={p} onDone={patch => onChange({
+            ...patch, pending: [...unit.pending.filter((_, j) => j !== i), ...(patch.pending ?? [])],
+          })} />
+        ))
+        : unit.pending.map(p => <div key={p} className="warn small">To do: {p}</div>))}
 
       {open && (
         <div className="stack unit-body">
@@ -173,7 +180,7 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEquip, onRemove }) {
             </label>
             <details>
               <summary className="small">Change equipment</summary>
-              <EquipmentPicker allowed={st.profile.equipment} slots={st.eqSlots} value={unit.equipment ?? []} onChange={onEquip} />
+              <EquipmentPicker allowed={allowedGear(unit, st)} slots={st.eqSlots} value={unit.equipment ?? []} onChange={onEquip} />
             </details>
             {!squad.started && unit.emptySlots > 0 && (
               <div className="muted small">{unit.emptySlots} empty slot{unit.emptySlots > 1 ? 's' : ''}: {unit.emptySlots} credit{unit.emptySlots > 1 ? 's' : ''} back.</div>
@@ -235,6 +242,13 @@ function BuyUnit({ faction, factionId, started, credits, forceFull, onBuy, onCan
     </form>
   );
 }
+
+// Profile list, plus gear already held (e.g. Other Gear rolls) and a lightsaber once force sensitive.
+const allowedGear = (unit, st) => [...new Set([
+  ...st.profile.equipment,
+  ...(st.traits.includes('Force Sensitive') ? ['Lightsaber'] : []),
+  ...(unit.equipment ?? []),
+])];
 
 function TraitList({ names }) {
   return (
