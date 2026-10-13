@@ -169,8 +169,8 @@ export const SCENARIOS = [
     rules: [
       'Set up 3 objectives along the halfway line of the board, and 1 in each player’s half of the board. The player with the lowest points selects which side they want to start on. The player with the most points deploys their force first, however they like, within 10” of their edge of the board. Then the player with the lowest points deploys in the same way.',
       'Objectives are captured by having at least one unit within 3” of an objective while your opponent has none. At the end of each turn, each player scores 1 point for each objective they control. Objectives controlled by enemies can still be captured, providing the same conditions are met.',
+      'The mission ends at the end of the turn in which one squad has been reduced to 1/3 or less of its starting force. The player with the most points at the end of the game wins.',
     ],
-    note: 'The campaign doc doesn’t say when this mission ends.',
     bonus: 'Wounding an enemy that is on an objective',
   },
   {
