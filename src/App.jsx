@@ -10,6 +10,7 @@ import RulesPage from './pages/RulesPage.jsx';
 import ShipPage from './pages/ShipPage.jsx';
 import TraitsPage from './pages/TraitsPage.jsx';
 import ScenariosPage from './pages/ScenariosPage.jsx';
+import SharedBattlePage from './pages/SharedBattlePage.jsx';
 
 const NAV = [
   { section: 'Squad Management', links: [
@@ -65,6 +66,7 @@ export default function App() {
           <Route path="/factions" element={<FactionsPage />} />
           <Route path="/factions/:id" element={<FactionsPage />} />
           <Route path="/battle" element={<BattlePage />} />
+          <Route path="/battle/game/:code" element={<SharedBattlePage />} />
           <Route path="/battle/:id" element={<BattlePage />} />
           <Route path="/rules" element={<RulesPage />} />
           <Route path="/rules/traits" element={<TraitsPage />} />
