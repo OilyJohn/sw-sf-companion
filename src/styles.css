@@ -93,6 +93,9 @@ input, select, textarea {
 .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .roll-input { display: grid; grid-template-columns: auto auto 1fr auto; gap: 8px; align-items: center; }
 .roll-input input { min-width: 0; }
+.btn.rolling { animation: die-shake .18s linear infinite; opacity: 1; min-width: 5.5em; }
+.die-face { display: inline-block; min-width: 2ch; font-variant-numeric: tabular-nums; }
+@keyframes die-shake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-6deg) scale(1.05); } 75% { transform: rotate(6deg) scale(1.05); } }
 .sub { padding: 10px 0; border-top: 1px solid var(--border); display: grid; gap: 8px; }
 .sub:first-of-type { border-top: 0; }
 .wrap { flex-wrap: wrap; }
@@ -110,3 +113,8 @@ input, select, textarea {
 .equip-picker .counter { padding: 4px 0; gap: 8px; }
 .step:disabled { opacity: .35; }
 details summary { cursor: pointer; color: var(--accent); padding: 6px 0; }
+
+.popup-backdrop { position: fixed; inset: 0; z-index: 50; background: rgb(0 0 0 / .6); display: grid; place-items: center; padding: 16px; animation: popup-fade .15s ease-out; }
+.popup { width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto; border: 1px solid var(--accent); }
+.popup h2 { margin: 0; color: var(--accent); }
+@keyframes popup-fade { from { opacity: 0; } }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ResultPopup from './ResultPopup.jsx';
 import RollInput from './RollInput.jsx';
 import { findTrait } from '../data/traits.js';
 import {
@@ -25,6 +26,7 @@ const addTraits = (unit, ...traits) => ({ traits: [...unit.traits, ...traits.map
 function TraitTask({ unit, squad, spec, onDone }) {
   const [tableId, setTableId] = useState(spec.tables[0]);
   const [roll, setRoll] = useState(null);
+  const [popup, setPopup] = useState(false);
   const table = traitTable(tableId);
   const has = new Set(unitStats(unit, squad.faction)?.traits.map(n => findTrait(n)?.name ?? n));
   const rows = roll === null ? [] : rollTraitTable(table, roll);
@@ -42,8 +44,12 @@ function TraitTask({ unit, squad, spec, onDone }) {
           ))}
         </div>
       )}
-      {!spec.choose && roll === null && <RollInput dice={table.dice} min={min} max={max} onRoll={setRoll} />}
+      {!spec.choose && roll === null && <RollInput dice={table.dice} min={min} max={max} onRoll={n => { setRoll(n); setPopup(true); }} />}
       {roll !== null && <div className="small muted">Rolled {roll} on {table.name}.</div>}
+      {popup && rows.length > 0 && (
+        <ResultPopup heading={`Rolled ${roll} on ${table.name}`} onClose={() => setPopup(false)}
+          items={rows.map(tr => ({ title: tr.pts === null ? tr.name : `${tr.name} (${tr.pts} pts)`, text: tr.text }))} />
+      )}
       {chooseAny
         ? <TraitPicker traits={choosable(table)} has={has} onPick={tr => onDone(addTraits(unit, tr))} />
         : rows.map(tr => (
@@ -109,6 +115,7 @@ function RemoveNegativeTask({ unit, onDone }) {
 
 function FormTask({ unit, spec, onDone }) {
   const [form, setForm] = useState(null);
+  const [popup, setPopup] = useState(false);
   const level = form ? formLevel(unit, form) : 0;
   const gained = form && level < 3 ? form.levels[level].map(parseFormTrait) : [];
 
@@ -124,7 +131,13 @@ function FormTask({ unit, spec, onDone }) {
           ))}
         </select>
       ) : form === null && (
-        <RollInput dice="D8" min={1} max={8} onRoll={n => setForm(LIGHTSABER_FORMS.find(f => f.roll === n))} />
+        <RollInput dice="D8" min={1} max={8} onRoll={n => { setForm(LIGHTSABER_FORMS.find(f => f.roll === n)); setPopup(true); }} />
+      )}
+      {popup && form && (
+        <ResultPopup heading={`Rolled ${form.roll}: ${form.name}`} onClose={() => setPopup(false)}
+          items={level >= 3
+            ? [{ title: form.name, text: `${unit.name} is already at level III, so re-roll.` }]
+            : gained.map(g => ({ title: `${g.name} (${g.pts} pts)`, text: findTrait(g.name)?.text ?? `Level ${LEVELS[level]} of ${form.name}.` }))} />
       )}
       {form && (level >= 3
         ? <div className="warn small">{form.name} is already at level III, so re-roll.</div>
