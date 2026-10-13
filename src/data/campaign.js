@@ -70,7 +70,6 @@ export const FORCE_REGULAR_PROMOTION = {
   ],
 };
 
-// Note: the source table stops at 94; 95-99 is unspecified (open question for Alex).
 export const FORCE_HERO_PROMOTION = {
   name: 'Jedi/Sith Hero Promotion Table', dice: '2D10', min: 0, max: 99,
   rows: [
@@ -81,9 +80,8 @@ export const FORCE_HERO_PROMOTION = {
     row(55, 59, 'Choose Force Power', 'Choose any force power.', { todo: 'Choose a Force Power' }),
     row(60, 74, 'Roll for Lightsaber Form', 'Re-roll if maxed or ineligible.', { todo: 'Roll for a Lightsaber Form to advance' }),
     row(75, 79, 'Choose Lightsaber Form', 'Choose an eligible form to advance 1 level in.', { todo: 'Choose a Lightsaber Form to advance' }),
-    row(80, 89, 'Choose From any of the Above Results', 'Pick any result from 0-79.', { todo: 'Choose any Jedi/Sith Hero Promotion result from 0-79' }),
-    row(90, 94, 'Roll for a Leader Only Trait', 'Re-roll if you already have it.', { todo: 'Roll for a Leader Only trait' }),
-    row(95, 99, 'Not in the rules yet', 'The Jedi/Sith Hero Promotion table stops at 94. Ask your group how to resolve this roll.', { todo: 'Resolve Jedi/Sith hero promotion roll of 95-99 (not in the rules yet)' }),
+    row(80, 94, 'Choose From any of the Above Results', 'Pick any result from 0-79.', { todo: 'Choose any Jedi/Sith Hero Promotion result from 0-79' }),
+    row(95, 99, 'Roll for a Leader Only Trait', 'Re-roll if you already have it.', { todo: 'Roll for a Leader Only trait' }),
   ],
 };
 
@@ -95,17 +93,17 @@ export const RESULTS = {
 
 export const EXP_PER_PROMOTION = 5;
 
-// Scenarios as written up in the campaign doc, with their bonus objective EXP.
+// Scenarios as numbered 1-10 in the campaign doc, with their bonus objective EXP.
 export const SCENARIOS = [
-  { name: 'Squad Elimination', bonus: 'Landing the killing blow on regular units' },
-  { name: 'Disable the Shield Generator', bonus: 'Attackers: wounding or disabling the shield generator (if disabling, 1 EXP per remaining wound on it). Defenders: landing the killing blow on regular units' },
-  { name: 'Advanced Scouting Parties', bonus: 'Getting off the opponent’s edge of the board' },
-  { name: 'Bounty Hunt', bonus: 'Inflicting a wound on the bounty' },
-  { name: 'Rescue', bonus: 'Attackers: killing blow on an enemy within 3" of the target, being within 3" of the target to win. Defenders: landing the killing blow on regular units' },
-  { name: 'Domination', bonus: 'Wounding an enemy that is on an objective' },
-  { name: 'Supply Shower', bonus: 'Marking a crate that is then picked up for your side' },
-  { name: 'Cantina Brawl', bonus: 'Landing the killing blow on regular units' },
-  { name: 'Heroic Last Stand', bonus: 'Attackers: finishing blow on an enemy hero (2 EXP instead of 1). Defenders: surviving to the end of the game' },
-  { name: 'Aggressive Negotiations', bonus: 'Carrying your leader at least 10" (once per unit); inflicting a wound on an enemy carrying their leader' },
+  { roll: 1, name: 'Squad Elimination', bonus: 'Landing the killing blow on regular units' },
+  { roll: 2, name: 'Disable the Shield Generator', bonus: 'Attackers: wounding or disabling the shield generator (if disabling, 1 EXP per remaining wound on it). Defenders: landing the killing blow on regular units' },
+  { roll: 3, name: 'Advanced Scouting Parties', bonus: 'Getting off the opponent’s edge of the board' },
+  { roll: 4, name: 'Bounty Hunt', bonus: 'Inflicting a wound on the bounty' },
+  { roll: 5, name: 'Rescue', bonus: 'Attackers: killing blow on an enemy within 3" of the target, being within 3" of the target to win. Defenders: landing the killing blow on regular units' },
+  { roll: 6, name: 'Domination', bonus: 'Wounding an enemy that is on an objective' },
+  { roll: 7, name: 'Supply Shower', bonus: 'Marking a crate that is then picked up for your side' },
+  { roll: 8, name: 'Cantina Brawl', bonus: 'Landing the killing blow on regular units' },
+  { roll: 9, name: 'Heroic Last Stand', bonus: 'Attackers: finishing blow on an enemy hero (2 EXP instead of 1). Defenders: surviving to the end of the game' },
+  { roll: 10, name: 'Aggressive Negotiations', bonus: 'Carrying your leader at least 10" (once per unit); inflicting a wound on an enemy carrying their leader' },
   { name: 'Other / custom', bonus: '' },
 ];
