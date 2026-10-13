@@ -6,9 +6,10 @@ import {
   EXP_PER_PROMOTION, FORCE_HERO_PROMOTION, FORCE_REGULAR_PROMOTION, HERO_INJURY, HERO_PROMOTION,
   REGULAR_PROMOTION, RESULTS, WARRIOR_INJURY, lookup,
 } from '../data/campaign.js';
-import { MAX_HEROES } from '../data/factions.js';
-import { FORCE_UNITS, ROLE_BONUS } from '../data/rules.js';
-import { saveSquad, unitStats, useSquad } from '../squads.js';
+import TodoTask from '../components/TodoTask.jsx';
+import { FORCE_UNITS } from '../data/rules.js';
+import { promotionOptions } from '../promotions.js';
+import { saveSquad, useSquad } from '../squads.js';
 
 export default function ShipPage() {
   return <SignInGate what="this squad"><Ship /></SignInGate>;
@@ -76,10 +77,12 @@ function Ship() {
       <Section n={3} title="To do" done={!todos.length}>
         {todos.length === 0 && <p className="muted small">Nothing outstanding.</p>}
         {todos.map(u => u.pending.map((p, i) => (
-          <label key={u.id + i} className="check">
-            <input type="checkbox" onChange={() => updateUnit(u.id, { pending: u.pending.filter((_, j) => j !== i) })} />
-            <span><b>{u.name}</b>: {p}</span>
-          </label>
+          <TodoTask key={u.id + i + p} unit={u} squad={squad} text={p}
+            onDone={patch => {
+              // Drop this to-do; a result can also add new ones (patch.pending holds only the new ones).
+              const rest = u.pending.filter((_, j) => j !== i);
+              updateUnit(u.id, { ...patch, pending: [...rest, ...(patch.pending ?? [])] });
+            }} />
         )))}
       </Section>
 
@@ -154,30 +157,7 @@ function PromotionRoll({ unit, squad, onApply }) {
     : (force ? FORCE_REGULAR_PROMOTION : REGULAR_PROMOTION);
   const [roll, setRoll] = useState(null);
   const res = roll === null ? null : lookup(table, roll);
-  const st = unitStats(unit, squad.faction);
-  const heroes = squad.units.filter(u => isHero(u) && !['dead'].includes(u.status)).length;
-  const e = res?.effect ?? {};
-  const todo = t => ({ pending: [...(unit.pending ?? []), t] });
-
-  let options = null;
-  if (res) {
-    if (e.eqSlot) options = [['Apply', { bonusEqSlots: unit.bonusEqSlots + 1 }]];
-    else if (e.wound) options = st.wounds >= 3 ? null : [['Apply', { bonusWounds: unit.bonusWounds + 1 }]];
-    else if (e.die) {
-      options = [];
-      if (st.cc < 12) options.push(['Close combat +2', { dieSteps: { ...unit.dieSteps, cc: unit.dieSteps.cc + 1 } }]);
-      if (st.s < 12) options.push(['Shooting +2', { dieSteps: { ...unit.dieSteps, s: unit.dieSteps.s + 1 } }]);
-      if (!options.length) options = null;
-    } else if (e.promote) {
-      options = st.profile.promotesTo.length
-        ? st.profile.promotesTo.map(t => [`Promote to ${t}`, { type: t }])
-        : [['Not eligible: take nothing', {}]];
-    } else if (e.hero) {
-      options = heroes >= MAX_HEROES ? null
-        : [['Make officer', { role: 'officer', pending: [...(unit.pending ?? []), ROLE_BONUS.officer.pending] }]];
-    } else if (e.todo) options = [['Add to to-do list', todo(e.todo)]];
-    else options = [['OK', {}]];
-  }
+  const options = res ? promotionOptions(res, unit, squad) : null;
 
   return (
     <div className="sub">
