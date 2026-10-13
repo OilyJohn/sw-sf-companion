@@ -6,6 +6,7 @@ import { LIGHTSABER_FORMS, TRAIT_TABLES, findTrait } from '../data/traits.js';
 const SOURCES = {
   SF: 'Star Wars: Special Forces',
   JS: 'New Jedi/Sith Progression',
+  GH: 'Galactic Heroes rulebook',
 };
 
 // Traits that appear on unit profiles but have no description in Alex's docs.

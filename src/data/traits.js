@@ -1,6 +1,7 @@
 // Trait text transcribed from Alex's docs only (not the GH rulebook):
 //   SF  = STAR WARS: SPECIAL FORCES (trait tables)
 //   JS  = New Jedi/Sith Progression
+//   GH  = Galactic Heroes 2nd Ed rulebook (only Small and Soulless, at Alex's request)
 // `pts` is the points cost added to a unit; `roll` is the table range.
 
 const t = (roll, name, pts, text, extra = {}) => ({ roll, name, pts, text, ...extra });
@@ -72,8 +73,7 @@ export const TRAIT_TABLES = [
     ],
   },
   {
-    id: 'shooting', name: 'Shooting Traits', dice: 'D10', source: 'SF',
-    note: 'Labelled D10 in the doc, but the ranges run 0-99 like the 2D10 tables.',
+    id: 'shooting', name: 'Shooting Traits', dice: '2D10', source: 'SF',
     traits: [
       t('0-5', 'Loads of Ammo', 1, 'Ignore first Out of Ammo result of the game.'),
       t('6-11', 'Two Gunned', 1, 'Can use burst, but don’t go out of ammo unless rolling at least two 1s.'),
@@ -135,7 +135,7 @@ export const TRAIT_TABLES = [
   },
   {
     id: 'force-powers', name: 'Force Powers', dice: 'D10', source: 'JS',
-    note: 'Labelled D10 in the doc, but entries run 1-12, there is no 7, and 6 differs for dark side (DS) and light side (LS).',
+    note: 'Labelled D10 in the doc, but entries run 1-12. 6 differs for dark side (DS) and light side (LS).',
     traits: [
       t('1', 'Jump', 1, 'Use 2 actions to jump to a surface that’s no more than 8" away in a straight line.'),
       t('2', 'Sprint', 1, 'When using both actions to move, gain an extra 3" of movement (total).'),
@@ -144,11 +144,11 @@ export const TRAIT_TABLES = [
       t('5', 'TK Grab', 3, 'Make a task roll to be able to pick up something within 12", and move it up to 5" in any direction. Medium (5+) for objects, Hard (8+) for other units. If lifted in the air, the object drops to the ground at the end of this unit’s activation.'),
       t('6 (DS)', 'Choke', 2, 'Ranged attack with a range of 6/12".'),
       t('6 (LS)', 'Heal', 3, 'If in contact with a friendly, spend 1 action to remove 1 wound or all shock tokens on that unit.'),
-      t('8', 'Lightning/Force Justice', 3, 'Acts like a ranged weapon with range 9/18" and Splash.'),
-      t('9', 'Lightsaber Throw', 2, 'As an action, make a Hard (8+) task roll to throw your lightsaber at a target within 12". On a 1, your lightsaber is dropped on the floor halfway between you and your target.'),
-      t('10', 'Dominate', 3, 'For 2 actions, make a Medium (5+) task roll to take control of a non-hero, non-force wielder enemy unit, and take 2 actions with them. This does not affect that unit’s turn; they can still be activated as normal later in the turn if they have not already activated this turn.'),
-      t('11', 'Mind Trick', 2, 'When charged by an enemy, you may choose to make a Hard (8+) task roll. On success the enemy gets to just outside your control zone and their activation ends.'),
-      t('12', 'Choose any of the above', null, ''),
+      t('7', 'Lightning/Force Justice', 3, 'Acts like a ranged weapon with range 9/18" and Splash.'),
+      t('8', 'Lightsaber Throw', 2, 'As an action, make a Hard (8+) task roll to throw your lightsaber at a target within 12". On a 1, your lightsaber is dropped on the floor halfway between you and your target.'),
+      t('9', 'Dominate', 3, 'For 2 actions, make a Medium (5+) task roll to take control of a non-hero, non-force wielder enemy unit, and take 2 actions with them. This does not affect that unit’s turn; they can still be activated as normal later in the turn if they have not already activated this turn.'),
+      t('10', 'Mind Trick', 2, 'When charged by an enemy, you may choose to make a Hard (8+) task roll. On success the enemy gets to just outside your control zone and their activation ends.'),
+      t('11-12', 'Choose any of the above', null, ''),
     ],
   },
   {
@@ -162,6 +162,15 @@ export const TRAIT_TABLES = [
     ],
   },
 ];
+
+TRAIT_TABLES.push({
+  id: 'gh', name: 'Unit Traits from the GH Rulebook', dice: null, source: 'GH',
+  note: 'Not in the campaign docs, so the text is from the Galactic Heroes 2nd Ed rulebook.',
+  traits: [
+    t(null, 'Small', null, 'You are smaller than most. That makes you a hard target. Enemies shooting at you get a -1 to their roll. However, your size gives you only 2 wounds instead of the normal 3, as well as a -1 to any wound rolls you deliver in Close Combat.'),
+    t(null, 'Soulless', null, 'You never take Shock results. But your lack of self-preservation makes you easier to hit. Anyone targeting you with a Shoot action gets a +1 to their roll.'),
+  ],
+});
 
 // Lightsaber forms: advance a level (I, II, III) to gain that level's traits.
 export const LIGHTSABER_FORMS = [
@@ -188,7 +197,7 @@ const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 const INDEX = new Map();
 for (const table of TRAIT_TABLES) {
   for (const tr of table.traits) {
-    if (tr.pts === null) continue;
+    if (tr.pts === null && !tr.text) continue;
     for (const n of [tr.name, ...(tr.aliases ?? [])]) INDEX.set(norm(n), { ...tr, table: table.name });
   }
 }
