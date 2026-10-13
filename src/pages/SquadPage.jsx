@@ -84,6 +84,8 @@ function Squad() {
           <Stat label="Units" value={active.length} />
         </div>
         {warnings.map(w => <div key={w} className="warn small">{w}</div>)}
+        {squad.battle && <Link className="btn wide banner" to={`/battle/${squad.id}`}>Battle in progress: open tracker</Link>}
+        {squad.backToShip && <Link className="btn wide banner" to={`/squads/${squad.id}/ship`}>Back to the Ship: to-do list</Link>}
         {!squad.started && mine && (
           <p className="muted small">
             Starting company: empty equipment slots refund 1 credit each until you mark the squad as started.{' '}
@@ -164,6 +166,22 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEmpty, onRemove }) {
                   onChange={e => onEmpty(Math.max(0, Math.min(st.eqSlots, Number(e.target.value) || 0)))} />
               </label>
             )}
+            <div className="counter">
+              <span className="small">EXP (promotions taken: {unit.promotions ?? 0})</span>
+              <div className="row gap">
+                <button className="icon-btn step" aria-label="Decrease EXP" onClick={() => onChange({ exp: Math.max(0, unit.exp - 1) })}>−</button>
+                <b className="count">{unit.exp}</b>
+                <button className="icon-btn step" aria-label="Increase EXP" onClick={() => onChange({ exp: unit.exp + 1 })}>+</button>
+              </div>
+            </div>
+            <label>Status
+              <select value={unit.status} onChange={e => onChange({ status: e.target.value })}>
+                <option value="ready">Ready</option>
+                <option value="injured">Injured (misses next mission)</option>
+                <option value="mia">M.I.A.</option>
+                <option value="dead">Dead</option>
+              </select>
+            </label>
             <label>Notes<textarea rows="2" value={unit.notes} onChange={e => onChange({ notes: e.target.value })} /></label>
             <button className="btn danger ghost" onClick={onRemove}>Remove unit</button>
           </>}

@@ -7,6 +7,7 @@ import SquadPage from './pages/SquadPage.jsx';
 import FactionsPage from './pages/FactionsPage.jsx';
 import BattlePage from './pages/BattlePage.jsx';
 import RulesPage from './pages/RulesPage.jsx';
+import ShipPage from './pages/ShipPage.jsx';
 
 const NAV = [
   { section: 'Squad Management', links: [
@@ -21,7 +22,7 @@ export default function App() {
   const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const title = NAV.flatMap(s => s.links).find(l => location.pathname.startsWith(l.to))?.label ?? 'Special Forces';
+  const title = location.pathname.endsWith('/ship') ? 'Back to the Ship' : NAV.flatMap(s => s.links).find(l => location.pathname.startsWith(l.to))?.label ?? 'Special Forces';
 
   return (
     <div className={`shell ${open ? 'nav-open' : ''}`}>
@@ -54,9 +55,11 @@ export default function App() {
           <Route path="/" element={<Navigate to="/squads" replace />} />
           <Route path="/squads" element={<SquadsPage />} />
           <Route path="/squads/:id" element={<SquadPage />} />
+          <Route path="/squads/:id/ship" element={<ShipPage />} />
           <Route path="/factions" element={<FactionsPage />} />
           <Route path="/factions/:id" element={<FactionsPage />} />
           <Route path="/battle" element={<BattlePage />} />
+          <Route path="/battle/:id" element={<BattlePage />} />
           <Route path="/rules" element={<RulesPage />} />
         </Routes>
       </main>
