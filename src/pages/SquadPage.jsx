@@ -4,7 +4,7 @@ import { useAuth } from '../auth.jsx';
 import SignInGate from '../components/SignInGate.jsx';
 import TodoTask from '../components/TodoTask.jsx';
 import { MAX_FORCE_WIELDERS, MAX_HEROES } from '../data/factions.js';
-import { UNCONFIRMED_SLOTS, slotsOf, slotsUsed } from '../data/equipment.js';
+import { slotsOf, slotsUsed } from '../data/equipment.js';
 import { FORCE_UNITS, ROLE_BONUS, findProfile, getFaction } from '../data/rules.js';
 import { findTrait } from '../data/traits.js';
 import { deleteSquad, newUnit, saveSquad, squadPoints, unitStats, useSquad } from '../squads.js';
@@ -281,7 +281,7 @@ function EquipmentPicker({ allowed, slots, value, onChange }) {
       <div className={`small ${used > slots ? 'warn' : 'muted'}`}>Slots used {used}/{slots}</div>
       {allowed.map(item => (
         <div key={item} className="counter">
-          <span className="small">{item} <span className="muted">({slotsOf(item)} slot{slotsOf(item) > 1 ? 's' : ''}{UNCONFIRMED_SLOTS.has(item) ? ', unconfirmed' : ''})</span></span>
+          <span className="small">{item} <span className="muted">({slotsOf(item)} slot{slotsOf(item) > 1 ? 's' : ''})</span></span>
           <div className="row gap">
             <button type="button" className="icon-btn step" aria-label={`Remove ${item}`} disabled={!count(item)} onClick={() => drop(item)}>−</button>
             <b className="count">{count(item)}</b>
