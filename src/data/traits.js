@@ -1,6 +1,5 @@
 // Trait text transcribed from Alex's docs only (not the GH rulebook):
 //   SF  = STAR WARS: SPECIAL FORCES (trait tables)
-//   AM  = SW: SF Gameplay Rules Amendments v0.0
 //   JS  = New Jedi/Sith Progression
 // `pts` is the points cost added to a unit; `roll` is the table range.
 
@@ -66,9 +65,7 @@ export const TRAIT_TABLES = [
       t('72-75', 'Weapon Master', 3, '+1 to CC roll (must be holding a CC weapon).'),
       t('76-79', 'Freight Train', 3, 'When winning a CC by 5 or more, knock your opponent down in addition to whatever wound result you roll.'),
       t('80-83', 'Ferocious', 4, '+1 to Wound in CC.'),
-      t('84-86', 'Sharp Tongued', 3, 'Make a Medium (5+) task roll to force your opponent to re-roll 1 CC die.', {
-        amended: 'Amendments nerf: costs 3 pts (was 4) and is a Medium (5+) task roll rather than Easy (3+).',
-      }),
+      t('84-86', 'Sharp Tongued', 4, 'Make a Medium (5+) task roll to force your opponent to re-roll 1 CC die.'),
       t('87-89', 'Brawler', 4, 'Re-roll your CC die once per turn.'),
       t('90-98', 'Choose any of the above', null, ''),
       t('99', 'Master of Melee', 5, 'Roll 2 dice in CC and pick the best result. Stacks with the 2 card.'),
@@ -155,21 +152,13 @@ export const TRAIT_TABLES = [
     ],
   },
   {
-    id: 'force-misc', name: 'Misc Traits & Force Powers', dice: null, source: 'JS + AM',
+    id: 'force-misc', name: 'Misc Traits & Force Powers', dice: null, source: 'JS',
     traits: [
       t(null, 'Shii-Cho', 3, '+1 in CC rolls with lightsabers.'),
-      t(null, 'Block', 2, 'If shot at, make a task roll to try and block the shot. Hard (8+) for 12" or less, Medium (5+) for more than 12".', {
-        amended: 'Amendments: like Deflect, but only to block the incoming projectile.',
-      }),
+      t(null, 'Block', 2, 'If shot at, make a task roll to try and block the shot. Hard (8+) for 12" or less, Medium (5+) for more than 12".'),
       t(null, 'Push', 3, 'Place the 3" template up to 12" away. Roll to hit each unit under the template on a 5+. If hit, the unit is pushed back 3" and gains a shock token. For each 1 rolled, this unit gains a shock token.'),
       t(null, 'Conduit of Evil', 2, 'If a dark side force user opponent gets a result that puts a shock token on this unit during close combat, make a Hard (8+) task roll to transfer that shock onto the opponent instead.'),
-      t(null, 'Deflect', 3, 'After rolling to block, you must also make a shoot roll to see if the blaster bolt is reflected back at the target, rather than just instantly rolling to wound. Only works on energy weapons, not arrows etc. (0-12" 5+, 12-24" 8+, 24-48" 10+).', {
-        amended: 'Amendments nerf to the original Deflect.',
-      }),
-      t(null, 'Force Lightning/Electric Judgement', 3, 'Acts like a ranged weapon with Splash, range of 6"/12" and using the stun weapon wound table.', {
-        aliases: ['Force Lightning', 'Electric Judgement'],
-        amended: 'New in the Amendments. Note the Force Powers table has a separate Lightning/Force Justice at 9/18".',
-      }),
+      t(null, 'Deflect', 3, 'After rolling to block, you must also make a shoot roll to see if the blaster bolt is reflected back at the target, rather than just instantly rolling to wound. Only works on energy weapons, not arrows etc. (0-12" 5+, 12-24" 8+, 24-48" 10+).'),
     ],
   },
 ];
