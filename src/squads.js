@@ -24,6 +24,19 @@ export function useSquad(id) {
   return squad;
 }
 
+// Live squads by id (any player's, for shared battles), as { [id]: squad }.
+export function useSquadsById(ids) {
+  const key = [...new Set(ids.filter(Boolean))].sort().join(',');
+  const [squads, setSquads] = useState({});
+  useEffect(() => {
+    if (!key) return setSquads({});
+    const unsubs = key.split(',').map(id => onSnapshot(doc(db, 'squads', id), d =>
+      setSquads(s => ({ ...s, [id]: d.exists() ? { id: d.id, ...d.data() } : null }))));
+    return () => unsubs.forEach(u => u());
+  }, [key]);
+  return squads;
+}
+
 export function createSquad(user, { name, faction }) {
   return addDoc(squadsCol, {
     ownerId: user.uid,

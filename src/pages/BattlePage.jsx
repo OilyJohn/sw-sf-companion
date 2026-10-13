@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import RollInput from '../components/RollInput.jsx';
 import SignInGate from '../components/SignInGate.jsx';
+import { createBattle, normaliseCode, useMyBattles } from '../battles.js';
 import { RESULTS, SCENARIOS } from '../data/campaign.js';
-import { getFaction } from '../data/rules.js';
 import { saveSquad, squadPoints, unitStats, useMySquads, useSquad } from '../squads.js';
 
 export default function BattlePage() {
@@ -13,26 +13,77 @@ export default function BattlePage() {
 
 function Battle() {
   const { id } = useParams();
-  return id ? <SquadBattle id={id} /> : <PickSquad />;
+  return id ? <SquadBattle id={id} /> : <BattleHome />;
 }
 
-function PickSquad() {
+function BattleHome() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const squads = useMySquads(user.uid);
-  if (squads === null) return <p className="muted">Loading squads…</p>;
-  if (!squads.length) return <p>Create a squad first under <Link to="/squads">My Squads</Link>.</p>;
+  const battles = useMyBattles(user.uid);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function host() {
+    setBusy(true);
+    try {
+      navigate(`/battle/game/${await createBattle(user)}`);
+    } catch (e) {
+      alert(e.message);
+      setBusy(false);
+    }
+  }
+
+  const inBattle = (squads ?? []).filter(s => s.battle && !s.battle.battleId);
+  const free = (squads ?? []).filter(s => !s.battle && !s.backToShip);
   return (
     <div className="stack">
-      <p className="muted">Which squad is going into battle?</p>
-      {squads.map(s => (
+      <div className="card stack">
+        <h2>Start a battle</h2>
+        <p className="muted small">Host a battle and share the code. Each player joins on their own phone, picks a squad and readies up. The battle starts once everyone is ready.</p>
+        <button className="btn wide" disabled={busy} onClick={host}>Host a new battle</button>
+        <form className="row gap" onSubmit={e => { e.preventDefault(); normaliseCode(code) && navigate(`/battle/game/${normaliseCode(code)}`); }}>
+          <input value={code} placeholder="Battle code" autoCapitalize="characters" onChange={e => setCode(e.target.value)} style={{ flex: 1, minWidth: 0 }} />
+          <button className="btn ghost" disabled={!normaliseCode(code)}>Join</button>
+        </form>
+      </div>
+
+      {!!free.length && (
+        <div className="card stack">
+          <div className="nav-heading">Solo test battle</div>
+          <p className="muted small">Play on your own without a lobby. EXP, injuries and credits still apply.</p>
+          <select value="" onChange={e => e.target.value && navigate(`/battle/${e.target.value}`)}>
+            <option value="">Choose a squad…</option>
+            {free.map(s => <option key={s.id} value={s.id}>{s.name} ({squadPoints(s)} pts)</option>)}
+          </select>
+        </div>
+      )}
+
+      {!!battles?.length && (
+        <div className="stack">
+          <div className="nav-heading">Your battles</div>
+          {battles.map(b => (
+            <Link key={b.id} to={`/battle/game/${b.id}`} className="card link-card">
+              <div className="row between">
+                <strong>{b.status === 'active' ? b.scenario : 'Getting ready'}</strong>
+                <span className={`pill ${b.status === 'active' ? 'warn' : ''}`}>{b.status === 'active' ? `Turn ${b.turn}` : b.id}</span>
+              </div>
+              <div className="muted small">{Object.values(b.players).map(p => p.squadName || p.name).join(' vs ')}</div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {inBattle.map(s => (
         <Link key={s.id} to={`/battle/${s.id}`} className="card link-card">
           <div className="row between">
             <strong>{s.name}</strong>
-            {s.battle ? <span className="pill warn">In battle</span> : <span className="pill">{squadPoints(s)} pts</span>}
+            <span className="pill warn">{s.battle.test ? 'Test battle' : 'In battle'}</span>
           </div>
-          <div className="muted small">{getFaction(s.faction)?.name}</div>
+          <div className="muted small">{s.battle.scenario}{s.battle.opponent && ` vs ${s.battle.opponent}`}</div>
         </Link>
       ))}
+      {squads?.length === 0 && <p>Create a squad first under <Link to="/squads">My Squads</Link>.</p>}
     </div>
   );
 }
@@ -49,11 +100,12 @@ function SquadBattle({ id }) {
       </div>
     );
   }
-  return squad.battle ? <Tracker squad={squad} /> : <StartBattle squad={squad} />;
+  if (squad.battle?.battleId) return <Navigate to={`/battle/game/${squad.battle.battleId}`} replace />;
+  if (squad.battle) return <Tracker squad={squad} />;
+  return <StartBattle squad={squad} />;
 }
 
-const blankTrack = { ooa: false, wounds: 0, heroKills: 0, objective: 0 };
-
+// Solo test battle: no lobby, for trying things out alone.
 function StartBattle({ squad }) {
   const ready = squad.units.filter(u => u.status === 'ready');
   const [scenario, setScenario] = useState(SCENARIOS[0].name);
@@ -69,13 +121,14 @@ function StartBattle({ squad }) {
 
   function start() {
     const units = Object.fromEntries([...picked].map(uid => [uid, { ...blankTrack }]));
-    saveSquad(squad.id, { battle: { scenario, opponent: opponent.trim(), startedAt: Date.now(), units } });
+    saveSquad(squad.id, { battle: { test: true, scenario, opponent: opponent.trim(), startedAt: Date.now(), units } });
   }
 
   return (
     <div className="stack">
       <div className="card stack">
-        <h2>New battle: {squad.name}</h2>
+        <h2>Solo test battle: {squad.name}</h2>
+        <p className="muted small">Just you, no lobby. EXP, injuries and credits still apply to the squad.</p>
         {mustRescue && <p className="warn small">A unit is M.I.A., so this mission must be a Rescue.</p>}
         <label>Scenario
           <select value={scenario} onChange={e => setScenario(e.target.value)}>
@@ -97,12 +150,15 @@ function StartBattle({ squad }) {
           <div key={u.id} className="muted small">{u.name} is in the bacta tank and misses this mission.</div>
         ))}
       </div>
-      <button className="btn wide" disabled={!picked.size} onClick={start}>Start battle</button>
+      <button className="btn wide" disabled={!picked.size} onClick={start}>Start test battle</button>
     </div>
   );
 }
 
-function Tracker({ squad }) {
+export const blankTrack = { ooa: false, wounds: 0, heroKills: 0, objective: 0 };
+
+// `shared`: part of a shared battle, which is ended and abandoned from the battle panel instead.
+export function Tracker({ squad, shared = false }) {
   const [ending, setEnding] = useState(false);
   const { battle } = squad;
   const scenario = SCENARIOS.find(s => s.name === battle.scenario);
@@ -118,7 +174,7 @@ function Tracker({ squad }) {
     <div className="stack">
       <div className="card">
         <div className="row between">
-          <h2>{battle.scenario}</h2>
+          <h2>{battle.scenario}{battle.test && <span className="tag">Test</span>}</h2>
           <span className="pill">{units.length - down}/{units.length} in action</span>
         </div>
         {battle.opponent && <div className="muted small">vs {battle.opponent}</div>}
@@ -148,22 +204,26 @@ function Tracker({ squad }) {
         );
       })}
 
-      <button className="btn wide" onClick={() => setEnding(true)}>End battle</button>
-      <button className="btn ghost danger wide" onClick={() => confirm('Abandon this battle without recording it?') && saveSquad(squad.id, { battle: null })}>
-        Abandon battle
-      </button>
+      {!shared && (
+        <>
+          <button className="btn wide" onClick={() => setEnding(true)}>End battle</button>
+          <button className="btn ghost danger wide" onClick={() => confirm('Abandon this battle without recording it?') && saveSquad(squad.id, { battle: null })}>
+            Abandon battle
+          </button>
+        </>
+      )}
     </div>
   );
 }
 
-function Counter({ label, value, onChange }) {
+export function Counter({ label, value, onChange, max = Infinity }) {
   return (
     <div className="counter">
       <span className="small">{label}</span>
       <div className="row gap">
         <button className="icon-btn step" aria-label={`Decrease ${label}`} onClick={() => onChange(Math.max(0, value - 1))}>−</button>
         <b className="count">{value}</b>
-        <button className="icon-btn step" aria-label={`Increase ${label}`} onClick={() => onChange(value + 1)}>+</button>
+        <button className="icon-btn step" aria-label={`Increase ${label}`} disabled={value >= max} onClick={() => onChange(value + 1)}>+</button>
       </div>
     </div>
   );
@@ -173,10 +233,11 @@ function Counter({ label, value, onChange }) {
 // 1 per enemy hero defeated, plus objective EXP from the scenario.
 const battleExp = (t, mvp = false) => 1 + (t.wounds > 0 ? 1 : 0) + t.heroKills + t.objective + (mvp ? 1 : 0);
 
-function EndBattle({ squad, onBack }) {
+// `fixedResult`: the result every player agreed in a shared battle.
+export function EndBattle({ squad, onBack, fixedResult = null }) {
   const navigate = useNavigate();
   const { battle } = squad;
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(fixedResult);
   const [creditRoll, setCreditRoll] = useState(null);
   const [mvp, setMvp] = useState('');
   const units = squad.units.filter(u => battle.units[u.id]);
@@ -199,6 +260,8 @@ function EndBattle({ squad, onBack }) {
       backToShip: { injuries, result },
       history: [...(squad.history ?? []), {
         date: battle.startedAt, endedAt: Date.now(), scenario: battle.scenario, opponent: battle.opponent,
+        ...(battle.battleId ? { battleId: battle.battleId } : {}),
+        ...(battle.test ? { test: true } : {}),
         result, credits, mvp: mvp || null, exp: expGained, outOfAction: injuries,
       }],
     });
@@ -209,11 +272,13 @@ function EndBattle({ squad, onBack }) {
     <div className="stack">
       <div className="card stack">
         <h2>End battle</h2>
-        <div className="seg">
-          {Object.entries(RESULTS).map(([k, r]) => (
-            <button key={k} className={`btn ${result === k ? '' : 'ghost'}`} onClick={() => setResult(k)}>{r.label}</button>
-          ))}
-        </div>
+        {fixedResult ? <div>Result: <b>{RESULTS[fixedResult].label}</b></div> : (
+          <div className="seg">
+            {Object.entries(RESULTS).map(([k, r]) => (
+              <button key={k} className={`btn ${result === k ? '' : 'ghost'}`} onClick={() => setResult(k)}>{r.label}</button>
+            ))}
+          </div>
+        )}
         {result && (
           <>
             <div className="small">Credits: D8 + {RESULTS[result].credits}</div>
@@ -248,7 +313,7 @@ function EndBattle({ squad, onBack }) {
       </div>
 
       <button className="btn wide" disabled={credits === null} onClick={finish}>Record result and go Back to the Ship</button>
-      <button className="btn ghost wide" onClick={onBack}>Back to tracker</button>
+      {onBack && <button className="btn ghost wide" onClick={onBack}>Back to tracker</button>}
     </div>
   );
 }
