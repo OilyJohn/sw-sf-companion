@@ -34,6 +34,7 @@ export const blankWotf = (gap, bonuses = [], mercIds = []) => ({ gap, bonuses, u
 // Shared battles: a team's gap is (strongest other team − this team) divided by the average
 // players per team. It's split between the team's players by how far each one's points fall
 // short of the strongest team's per-player average, so the weaker player gets more.
+// The gap is rounded down to a multiple of the cheapest bonus.
 // teams: [{ id, players: [{ uid, points }] }]; returns { [uid]: { teamGap, share } }.
 export function wotfShares(teams) {
   const total = teams.reduce((n, t) => n + t.players.length, 0);
@@ -47,9 +48,15 @@ export function wotfShares(teams) {
     const target = strongest ? sum(strongest) / strongest.players.length : 0;
     const short = t.players.map(p => Math.max(0, target - p.points));
     const shortSum = short.reduce((a, b) => a + b, 0);
+    // Shares are whole multiples of the cheapest bonus: hand out the team's steps by
+    // largest remainder, so 25 splits as 10 + 15 rather than 12 + 13.
+    const steps = Math.floor(teamGap / MIN_GAP);
+    const exact = t.players.map((_, i) => steps * (shortSum ? short[i] / shortSum : 1 / t.players.length));
+    const given = exact.map(Math.floor);
+    let left = steps - given.reduce((a, b) => a + b, 0);
+    exact.map((x, i) => [x - given[i], i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (left > 0) { given[i]++; left--; } });
     t.players.forEach((p, i) => {
-      const part = shortSum ? short[i] / shortSum : 1 / t.players.length;
-      out[p.uid] = { teamGap: Math.floor(teamGap), share: Math.floor(teamGap * part) };
+      out[p.uid] = { teamGap: steps * MIN_GAP, share: given[i] * MIN_GAP };
     });
   });
   return out;
