@@ -1,0 +1,10 @@
+{
+  "name": "Special Forces Companion",
+  "short_name": "Special Forces",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#11141a",
+  "theme_color": "#11141a",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
