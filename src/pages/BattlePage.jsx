@@ -5,7 +5,7 @@ import RollInput from '../components/RollInput.jsx';
 import SignInGate from '../components/SignInGate.jsx';
 import { createBattle, normaliseCode, useMyBattles } from '../battles.js';
 import { RESULTS, SCENARIOS } from '../data/campaign.js';
-import { saveSquad, unitStats, useMySquads, useSquad } from '../squads.js';
+import { saveSquad, squadPoints, unitStats, useMySquads, useSquad } from '../squads.js';
 
 export default function BattlePage() {
   return <SignInGate what="your battles"><Battle /></SignInGate>;
@@ -35,6 +35,7 @@ function BattleHome() {
   }
 
   const inBattle = (squads ?? []).filter(s => s.battle && !s.battle.battleId);
+  const free = (squads ?? []).filter(s => !s.battle && !s.backToShip);
   return (
     <div className="stack">
       <div className="card stack">
@@ -46,6 +47,17 @@ function BattleHome() {
           <button className="btn ghost" disabled={!normaliseCode(code)}>Join</button>
         </form>
       </div>
+
+      {!!free.length && (
+        <div className="card stack">
+          <div className="nav-heading">Solo test battle</div>
+          <p className="muted small">Play on your own without a lobby. EXP, injuries and credits still apply.</p>
+          <select value="" onChange={e => e.target.value && navigate(`/battle/${e.target.value}`)}>
+            <option value="">Choose a squad…</option>
+            {free.map(s => <option key={s.id} value={s.id}>{s.name} ({squadPoints(s)} pts)</option>)}
+          </select>
+        </div>
+      )}
 
       {!!battles?.length && (
         <div className="stack">
@@ -66,7 +78,7 @@ function BattleHome() {
         <Link key={s.id} to={`/battle/${s.id}`} className="card link-card">
           <div className="row between">
             <strong>{s.name}</strong>
-            <span className="pill warn">In battle</span>
+            <span className="pill warn">{s.battle.test ? 'Test battle' : 'In battle'}</span>
           </div>
           <div className="muted small">{s.battle.scenario}{s.battle.opponent && ` vs ${s.battle.opponent}`}</div>
         </Link>
@@ -90,10 +102,55 @@ function SquadBattle({ id }) {
   }
   if (squad.battle?.battleId) return <Navigate to={`/battle/game/${squad.battle.battleId}`} replace />;
   if (squad.battle) return <Tracker squad={squad} />;
+  return <StartBattle squad={squad} />;
+}
+
+// Solo test battle: no lobby, for trying things out alone.
+function StartBattle({ squad }) {
+  const ready = squad.units.filter(u => u.status === 'ready');
+  const [scenario, setScenario] = useState(SCENARIOS[0].name);
+  const [opponent, setOpponent] = useState('');
+  const [picked, setPicked] = useState(() => new Set(ready.map(u => u.id)));
+  const mustRescue = squad.units.some(u => u.status === 'mia');
+
+  const toggle = uid => setPicked(p => {
+    const n = new Set(p);
+    n.has(uid) ? n.delete(uid) : n.add(uid);
+    return n;
+  });
+
+  function start() {
+    const units = Object.fromEntries([...picked].map(uid => [uid, { ...blankTrack }]));
+    saveSquad(squad.id, { battle: { test: true, scenario, opponent: opponent.trim(), startedAt: Date.now(), units } });
+  }
+
   return (
-    <div className="card stack">
-      <p>{squad.name} isn't in a battle.</p>
-      <Link className="btn" to="/battle">Host or join a battle</Link>
+    <div className="stack">
+      <div className="card stack">
+        <h2>Solo test battle: {squad.name}</h2>
+        <p className="muted small">Just you, no lobby. EXP, injuries and credits still apply to the squad.</p>
+        {mustRescue && <p className="warn small">A unit is M.I.A., so this mission must be a Rescue.</p>}
+        <label>Scenario
+          <select value={scenario} onChange={e => setScenario(e.target.value)}>
+            {SCENARIOS.map(s => <option key={s.name} value={s.name}>{s.roll ? `${s.roll}. ` : ''}{s.name}</option>)}
+          </select>
+        </label>
+        <label>Opponent<input value={opponent} placeholder="Who are you playing?" onChange={e => setOpponent(e.target.value)} /></label>
+        <div className="small"><span className="muted">Points rating: </span>{squadPoints(squad)} pts</div>
+      </div>
+      <div className="card stack">
+        <div className="nav-heading">Units taking part</div>
+        {ready.map(u => (
+          <label key={u.id} className="check">
+            <input type="checkbox" checked={picked.has(u.id)} onChange={() => toggle(u.id)} />
+            <span>{u.name} <span className="muted small">{u.type}</span></span>
+          </label>
+        ))}
+        {squad.units.filter(u => u.status === 'injured').map(u => (
+          <div key={u.id} className="muted small">{u.name} is in the bacta tank and misses this mission.</div>
+        ))}
+      </div>
+      <button className="btn wide" disabled={!picked.size} onClick={start}>Start test battle</button>
     </div>
   );
 }
@@ -117,7 +174,7 @@ export function Tracker({ squad, shared = false }) {
     <div className="stack">
       <div className="card">
         <div className="row between">
-          <h2>{battle.scenario}</h2>
+          <h2>{battle.scenario}{battle.test && <span className="tag">Test</span>}</h2>
           <span className="pill">{units.length - down}/{units.length} in action</span>
         </div>
         {battle.opponent && <div className="muted small">vs {battle.opponent}</div>}
@@ -204,6 +261,7 @@ export function EndBattle({ squad, onBack, fixedResult = null }) {
       history: [...(squad.history ?? []), {
         date: battle.startedAt, endedAt: Date.now(), scenario: battle.scenario, opponent: battle.opponent,
         ...(battle.battleId ? { battleId: battle.battleId } : {}),
+        ...(battle.test ? { test: true } : {}),
         result, credits, mvp: mvp || null, exp: expGained, outOfAction: injuries,
       }],
     });
