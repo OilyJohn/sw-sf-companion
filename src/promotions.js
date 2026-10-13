@@ -1,3 +1,4 @@
+import { EXP_PER_PROMOTION } from './data/campaign.js';
 import { MAX_HEROES } from './data/factions.js';
 import { ROLE_BONUS } from './data/rules.js';
 import { unitStats } from './squads.js';
@@ -31,3 +32,8 @@ export function promotionOptions(res, unit, squad, pending = unit.pending ?? [])
   if (e.todo) return [['Add to to-do list', { pending: [...pending, e.todo] }]];
   return [['OK', {}]];
 }
+
+// Excess EXP (beyond full boxes) can shift a promotion or trait result up or down the table,
+// 1 result per EXP. Regular units can use at most 1 per roll.
+export const excessExp = u => u.exp % EXP_PER_PROMOTION;
+export const maxShift = u => (isHero(u) ? excessExp(u) : Math.min(1, excessExp(u)));

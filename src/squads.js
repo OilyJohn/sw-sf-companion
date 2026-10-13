@@ -75,6 +75,12 @@ export function newUnit(profile, name) {
   };
 }
 
+// A Mercenary added for one mission by the Will of the Force (`temp` until hired).
+export function tempMerc(type) {
+  return { ...newUnit({ name: type }, type), temp: true };
+}
+export const withoutTemp = units => units.filter(u => !u.temp);
+
 export function unitStats(unit, factionId) {
   const p = findProfile(factionId, unit.type);
   if (!p) return null;
@@ -98,3 +104,7 @@ export function squadPoints(squad) {
     .filter(u => u.status === 'ready')
     .reduce((t, u) => t + (unitStats(u, squad.faction)?.points ?? 0), 0);
 }
+
+// Points of just the units taking part in a battle.
+export const unitsPoints = (squad, ids) =>
+  squad.units.filter(u => ids.includes(u.id)).reduce((t, u) => t + (unitStats(u, squad.faction)?.points ?? 0), 0);

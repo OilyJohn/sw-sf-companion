@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import ExpShift from './ExpShift.jsx';
 import ResultPopup from './ResultPopup.jsx';
 import RollInput from './RollInput.jsx';
 import { findTrait } from '../data/traits.js';
 import {
   LEVELS, LIGHTSABER_FORMS, choosable, diceRange, formLevel, parseFormTrait, rollTraitTable, todoSpec, traitTable,
 } from '../data/todos.js';
-import { promotionOptions } from '../promotions.js';
+import { maxShift, promotionOptions } from '../promotions.js';
 import { unitStats } from '../squads.js';
 
 // One Back to the Ship to-do: roll or choose the result and apply it to the unit.
@@ -23,45 +24,64 @@ export default function TodoTask({ unit, squad, text, onDone }) {
 
 const addTraits = (unit, ...traits) => ({ traits: [...unit.traits, ...traits.map(({ name, pts }) => ({ name, pts: pts ?? 0 }))] });
 
+// Results on a trait table in order; rows sharing a roll (Force Powers 6) are one result.
+const results = table => [...new Set(table.traits.filter(t => t.roll !== null).map(t => t.roll))];
+
 function TraitTask({ unit, squad, spec, onDone }) {
   const [tableId, setTableId] = useState(spec.tables[0]);
   const [roll, setRoll] = useState(null);
+  const [irl, setIrl] = useState(false);
+  const [shift, setShift] = useState(0);
   const [popup, setPopup] = useState(false);
   const table = traitTable(tableId);
   const has = new Set(unitStats(unit, squad.faction)?.traits.map(n => findTrait(n)?.name ?? n));
-  const rows = roll === null ? [] : rollTraitTable(table, roll);
+  const rolledRows = roll === null ? [] : rollTraitTable(table, roll);
+  const order = results(table);
+  const at = rolledRows.length ? order.indexOf(rolledRows[0].roll) : -1;
+  const rows = shift ? table.traits.filter(t => t.roll === order[at + shift]) : rolledRows;
   const chooseAny = spec.choose || rows.some(r => r.pts === null);
+  // The rules allow a re-roll when every trait rolled is one the unit already has.
+  const mustReroll = rows.length > 0 && !chooseAny && rows.every(tr => has.has(tr.name));
   const [min, max] = diceRange(table.dice);
+  const reset = () => { setRoll(null); setShift(0); };
+  const done = patch => onDone(shift ? { ...patch, exp: unit.exp - Math.abs(shift) } : patch);
 
   return (
     <div className="stack">
       {spec.tables.length > 1 && (
         <div className="row gap wrap">
           {spec.tables.map(id => (
-            <button key={id} className={`btn small-btn ${id === tableId ? '' : 'ghost'}`} onClick={() => { setTableId(id); setRoll(null); }}>
+            <button key={id} className={`btn small-btn ${id === tableId ? '' : 'ghost'}`} disabled={roll !== null && !irl}
+              onClick={() => { setTableId(id); reset(); }}>
               {traitTable(id).name}
             </button>
           ))}
         </div>
       )}
-      {!spec.choose && roll === null && <RollInput dice={table.dice} min={min} max={max} onRoll={n => { setRoll(n); setPopup(true); }} />}
-      {roll !== null && <div className="small muted">Rolled {roll} on {table.name}.</div>}
-      {popup && rows.length > 0 && (
+      {!spec.choose && roll === null && <RollInput dice={table.dice} min={min} max={max} onRoll={(n, typed) => { setRoll(n); setIrl(typed); setPopup(true); }} />}
+      {roll !== null && (
+        <div className="small muted">Rolled {roll} on {table.name}{shift ? `, shifted ${Math.abs(shift)} ${shift > 0 ? 'up' : 'down'} for ${Math.abs(shift)} EXP` : ''}.
+          {irl && <> <button className="link-btn small" onClick={reset}>change</button></>}</div>
+      )}
+      {popup && rolledRows.length > 0 && (
         <ResultPopup heading={`Rolled ${roll} on ${table.name}`} onClose={() => setPopup(false)}
-          items={rows.map(tr => ({ title: tr.pts === null ? tr.name : `${tr.name} (${tr.pts} pts)`, text: tr.text }))} />
+          items={rolledRows.map(tr => ({ title: tr.pts === null ? tr.name : `${tr.name} (${tr.pts} pts)`, text: tr.text }))} />
+      )}
+      {roll !== null && at >= 0 && (
+        <ExpShift shift={shift} max={maxShift(unit)} canUp={at + shift + 1 < order.length} canDown={at + shift - 1 >= 0} onShift={setShift} />
       )}
       {chooseAny
-        ? <TraitPicker traits={choosable(table)} has={has} onPick={tr => onDone(addTraits(unit, tr))} />
+        ? <TraitPicker traits={choosable(table)} has={has} onPick={tr => done(addTraits(unit, tr))} />
         : rows.map(tr => (
           <div key={tr.roll + tr.name} className="stack">
             <div><b>{tr.name}</b> ({tr.pts} pts) <span className="small">{tr.text}</span></div>
             {has.has(tr.name)
-              ? <div className="warn small">{unit.name} already has {tr.name}, so re-roll.</div>
-              : <button className="btn" onClick={() => onDone(addTraits(unit, tr))}>Add {tr.name}</button>}
+              ? <div className="warn small">{unit.name} already has {tr.name}{mustReroll ? ', so re-roll' : ''}.</div>
+              : <button className="btn" onClick={() => done(addTraits(unit, tr))}>Add {tr.name}</button>}
           </div>
         ))}
       <div className="row gap wrap">
-        {roll !== null && <button className="btn ghost" onClick={() => setRoll(null)}>Re-roll</button>}
+        {mustReroll && <button className="btn ghost" onClick={reset}>Re-roll</button>}
         {spec.alt && <button className="btn ghost" onClick={() => onDone(addTraits(unit, spec.alt.trait))}>{spec.alt.label}</button>}
       </div>
     </div>
@@ -115,6 +135,7 @@ function RemoveNegativeTask({ unit, onDone }) {
 
 function FormTask({ unit, spec, onDone }) {
   const [form, setForm] = useState(null);
+  const [irl, setIrl] = useState(false);
   const [popup, setPopup] = useState(false);
   const level = form ? formLevel(unit, form) : 0;
   const gained = form && level < 3 ? form.levels[level].map(parseFormTrait) : [];
@@ -131,7 +152,7 @@ function FormTask({ unit, spec, onDone }) {
           ))}
         </select>
       ) : form === null && (
-        <RollInput dice="D8" min={1} max={8} onRoll={n => { setForm(LIGHTSABER_FORMS.find(f => f.roll === n)); setPopup(true); }} />
+        <RollInput dice="D8" min={1} max={8} onRoll={(n, typed) => { setForm(LIGHTSABER_FORMS.find(f => f.roll === n)); setIrl(typed); setPopup(true); }} />
       )}
       {popup && form && (
         <ResultPopup heading={`Rolled ${form.roll}: ${form.name}`} onClose={() => setPopup(false)}
@@ -145,12 +166,14 @@ function FormTask({ unit, spec, onDone }) {
           <>
             <div><b>{form.roll}. {form.name}</b>: level {LEVELS[level]} gives {gained.map(g => `${g.name} (${g.pts})`).join(', ')}.</div>
             <div className="muted small">Re-roll if {unit.name} isn't eligible for this form.</div>
+            {!spec.choose && <button className="btn ghost" onClick={() => setForm(null)}>Not eligible, re-roll</button>}
             <button className="btn" onClick={() => onDone({ forms: { ...unit.forms, [form.name]: level + 1 }, ...addTraits(unit, ...gained) })}>
               Advance to level {LEVELS[level]}
             </button>
           </>
         ))}
-      {form && !spec.choose && <button className="btn ghost" onClick={() => setForm(null)}>Re-roll</button>}
+      {form && !spec.choose && level >= 3 && <button className="btn ghost" onClick={() => setForm(null)}>Re-roll</button>}
+      {form && !spec.choose && irl && <button className="link-btn small" onClick={() => setForm(null)}>Change typed roll</button>}
     </div>
   );
 }

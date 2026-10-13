@@ -202,6 +202,7 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEquip, onStash, onTak
         <div>
           <strong>{unit.name}</strong>
           {unit.role !== 'regular' && <span className={`tag ${unit.role}`}>{unit.role}</span>}
+          {unit.temp && <span className="tag">This mission only</span>}
           {unit.status !== 'ready' && <span className="tag">{unit.status}</span>}
           <div className="muted small">{unit.type}</div>
         </div>

@@ -3,9 +3,11 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import RollInput from '../components/RollInput.jsx';
 import SignInGate from '../components/SignInGate.jsx';
+import { WotfPanel, WotfPicker, mercsChosen } from '../components/WillOfTheForce.jsx';
 import { createBattle, normaliseCode, useMyBattles } from '../battles.js';
 import { RESULTS, SCENARIOS } from '../data/campaign.js';
-import { saveSquad, squadPoints, unitStats, useMySquads, useSquad } from '../squads.js';
+import { MERC_HIRE_COST, blankWotf, bonusCost, bonusCredits, bonusExp, countOf } from '../data/willOfTheForce.js';
+import { saveSquad, squadPoints, tempMerc, unitStats, unitsPoints, useMySquads, useSquad, withoutTemp } from '../squads.js';
 
 export default function BattlePage() {
   return <SignInGate what="your battles"><Battle /></SignInGate>;
@@ -111,7 +113,13 @@ function StartBattle({ squad }) {
   const [scenario, setScenario] = useState(SCENARIOS[0].name);
   const [opponent, setOpponent] = useState('');
   const [picked, setPicked] = useState(() => new Set(ready.map(u => u.id)));
+  const [oppPoints, setOppPoints] = useState('');
+  const [bonuses, setBonuses] = useState([]);
+  const [mercTypes, setMercTypes] = useState([]);
   const mustRescue = squad.units.some(u => u.status === 'mia');
+  const myPoints = unitsPoints(squad, [...picked]);
+  const gap = (Number(oppPoints) || 0) - myPoints;
+  const wotfOk = Math.max(0, gap) >= bonusCost(bonuses) && mercsChosen(bonuses, mercTypes);
 
   const toggle = uid => setPicked(p => {
     const n = new Set(p);
@@ -120,8 +128,16 @@ function StartBattle({ squad }) {
   });
 
   function start() {
-    const units = Object.fromEntries([...picked].map(uid => [uid, { ...blankTrack }]));
-    saveSquad(squad.id, { battle: { test: true, scenario, opponent: opponent.trim(), startedAt: Date.now(), units } });
+    const mercs = mercTypes.map(tempMerc);
+    const ids = [...picked, ...mercs.map(m => m.id)];
+    const units = Object.fromEntries(ids.map(uid => [uid, { ...blankTrack }]));
+    saveSquad(squad.id, {
+      ...(mercs.length ? { units: [...squad.units, ...mercs] } : {}),
+      battle: {
+        test: true, scenario, opponent: opponent.trim(), startedAt: Date.now(), units,
+        ...(bonuses.length ? { wotf: blankWotf(gap, bonuses, mercs.map(m => m.id)) } : {}),
+      },
+    });
   }
 
   return (
@@ -136,21 +152,32 @@ function StartBattle({ squad }) {
           </select>
         </label>
         <label>Opponent<input value={opponent} placeholder="Who are you playing?" onChange={e => setOpponent(e.target.value)} /></label>
-        <div className="small"><span className="muted">Points rating: </span>{squadPoints(squad)} pts</div>
+        <label>Opponent's points (units taking part)
+          <input type="number" inputMode="numeric" min={0} value={oppPoints} placeholder="For the Will of the Force"
+            onChange={e => setOppPoints(e.target.value)} />
+        </label>
       </div>
+      {oppPoints !== '' && (
+        <div className="card stack">
+          <div className="nav-heading">Will of the Force</div>
+          <WotfPicker budget={Math.max(0, gap)} picked={bonuses} mercTypes={mercTypes} onChange={(b, m) => { setBonuses(b); setMercTypes(m); }}
+            intro={gap > 0 ? `You're outgunned by ${gap} pts.` : 'You have the stronger side.'} />
+        </div>
+      )}
       <div className="card stack">
         <div className="nav-heading">Units taking part</div>
         {ready.map(u => (
           <label key={u.id} className="check">
             <input type="checkbox" checked={picked.has(u.id)} onChange={() => toggle(u.id)} />
-            <span>{u.name} <span className="muted small">{u.type}</span></span>
+            <span>{u.name} <span className="muted small">{u.type} · {unitStats(u, squad.faction)?.points ?? '?'} pts</span></span>
           </label>
         ))}
+        <div className="small">Taking part: <b>{myPoints} pts</b> <span className="muted">({picked.size} units)</span></div>
         {squad.units.filter(u => u.status === 'injured').map(u => (
           <div key={u.id} className="muted small">{u.name} is in the bacta tank and misses this mission.</div>
         ))}
       </div>
-      <button className="btn wide" disabled={!picked.size} onClick={start}>Start test battle</button>
+      <button className="btn wide" disabled={!picked.size || !wotfOk} onClick={start}>Start test battle</button>
     </div>
   );
 }
@@ -181,6 +208,8 @@ export function Tracker({ squad, shared = false }) {
         {scenario?.bonus && <div className="small" style={{ marginTop: 8 }}><span className="muted">Bonus objective EXP: </span>{scenario.bonus}</div>}
       </div>
 
+      <WotfPanel squad={squad} />
+
       {units.map(u => {
         const t = battle.units[u.id];
         const hero = u.role !== 'regular';
@@ -190,6 +219,7 @@ export function Tracker({ squad, shared = false }) {
               <div>
                 <strong>{u.name}</strong>
                 {hero && <span className={`tag ${u.role}`}>{u.role}</span>}
+                {u.temp && <span className="tag">Mercenary</span>}
                 <div className="muted small">{u.type} · W {unitStats(u, squad.faction)?.wounds}</div>
               </div>
               <button className={`btn small-btn ${t.ooa ? '' : 'ghost'}`} onClick={() => update(u.id, { ooa: !t.ooa })}>
@@ -207,7 +237,7 @@ export function Tracker({ squad, shared = false }) {
       {!shared && (
         <>
           <button className="btn wide" onClick={() => setEnding(true)}>End battle</button>
-          <button className="btn ghost danger wide" onClick={() => confirm('Abandon this battle without recording it?') && saveSquad(squad.id, { battle: null })}>
+          <button className="btn ghost danger wide" onClick={() => confirm('Abandon this battle without recording it?') && saveSquad(squad.id, { battle: null, units: withoutTemp(squad.units) })}>
             Abandon battle
           </button>
         </>
@@ -237,31 +267,45 @@ const battleExp = (t, mvp = false) => 1 + (t.wounds > 0 ? 1 : 0) + t.heroKills +
 export function EndBattle({ squad, onBack, fixedResult = null }) {
   const navigate = useNavigate();
   const { battle } = squad;
+  const wotf = battle.wotf;
   const [result, setResult] = useState(fixedResult);
   const [creditRoll, setCreditRoll] = useState(null);
+  const [creditIrl, setCreditIrl] = useState(false);
   const [mvp, setMvp] = useState('');
+  const [hire, setHire] = useState(() => new Set());
   const units = squad.units.filter(u => battle.units[u.id]);
-  const mvpCandidates = units.filter(u => u.role === 'regular');
-  const credits = result && creditRoll !== null ? creditRoll + RESULTS[result].credits : null;
+  const mercs = units.filter(u => u.temp);
+  const mvpCandidates = units.filter(u => u.role === 'regular' && !u.temp);
+  const extraCredits = result ? bonusCredits(wotf?.bonuses, result) : 0;
+  const extraExp = result ? bonusExp(wotf?.bonuses, result) : 0;
+  const credits = result && creditRoll !== null ? creditRoll + RESULTS[result].credits + extraCredits : null;
+  const funds = credits === null ? null : squad.credits + credits - hire.size * MERC_HIRE_COST;
+  const toggleHire = id => setHire(h => { const n = new Set(h); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  // A Mercenary who isn't hired leaves with no EXP or injury roll.
+  const staying = units.filter(u => !u.temp || hire.has(u.id));
+  const exp = u => battleExp(battle.units[u.id], u.id === mvp) + extraExp;
 
   async function finish() {
-    const expGained = Object.fromEntries(units.map(u => [u.id, battleExp(battle.units[u.id], u.id === mvp)]));
-    const injuries = units.filter(u => battle.units[u.id].ooa).map(u => u.id);
+    const expGained = Object.fromEntries(staying.map(u => [u.id, exp(u)]));
+    const injuries = staying.filter(u => battle.units[u.id].ooa).map(u => u.id);
+    const has = id => countOf(wotf?.bonuses, id);
     await saveSquad(squad.id, {
-      credits: squad.credits + credits,
+      credits: funds,
       started: true,
-      units: squad.units.map(u => {
+      units: squad.units.filter(u => !u.temp || hire.has(u.id)).map(u => {
+        if (u.temp) u = { ...u, temp: false };
         if (expGained[u.id] !== undefined) return { ...u, exp: u.exp + expGained[u.id] };
         // Units that sat this mission out in the bacta tank are fit again.
         if (u.status === 'injured') return { ...u, status: 'ready' };
         return u;
       }),
       battle: null,
-      backToShip: { injuries, result },
+      backToShip: { injuries, result, rerolls: { injury: has('injuryReroll'), promotion: has('promotionReroll') } },
       history: [...(squad.history ?? []), {
         date: battle.startedAt, endedAt: Date.now(), scenario: battle.scenario, opponent: battle.opponent,
         ...(battle.battleId ? { battleId: battle.battleId } : {}),
         ...(battle.test ? { test: true } : {}),
+        ...(wotf ? { wotf: wotf.bonuses } : {}),
         result, credits, mvp: mvp || null, exp: expGained, outOfAction: injuries,
       }],
     });
@@ -281,13 +325,27 @@ export function EndBattle({ squad, onBack, fixedResult = null }) {
         )}
         {result && (
           <>
-            <div className="small">Credits: D8 + {RESULTS[result].credits}</div>
+            <div className="small">Credits: D8 + {RESULTS[result].credits}{extraCredits ? ` + ${extraCredits} (Will of the Force)` : ''}</div>
             {creditRoll === null
-              ? <RollInput dice="D8" min={1} max={8} onRoll={setCreditRoll} />
-              : <div>Rolled {creditRoll} + {RESULTS[result].credits} = <b>{credits} credits</b> <button className="link-btn small" onClick={() => setCreditRoll(null)}>change</button></div>}
+              ? <RollInput dice="D8" min={1} max={8} onRoll={(n, irl) => { setCreditRoll(n); setCreditIrl(irl); }} />
+              : <div>Rolled {creditRoll} + {RESULTS[result].credits}{extraCredits ? ` + ${extraCredits}` : ''} = <b>{credits} credits</b>
+                  {creditIrl && <> <button className="link-btn small" onClick={() => setCreditRoll(null)}>change</button></>}</div>}
           </>
         )}
       </div>
+
+      {mercs.length > 0 && (
+        <div className="card stack">
+          <div className="nav-heading">Mercenaries</div>
+          {mercs.map(m => (
+            <label key={m.id} className="check">
+              <input type="checkbox" checked={hire.has(m.id)} disabled={funds === null || (!hire.has(m.id) && funds < MERC_HIRE_COST)} onChange={() => toggleHire(m.id)} />
+              <span className="small">Hire {m.name} permanently for {MERC_HIRE_COST} credits</span>
+            </label>
+          ))}
+          <div className="muted small">{credits === null ? 'Roll for credits first. ' : ''}Anyone not hired leaves after the mission, with no EXP or injury roll.</div>
+        </div>
+      )}
 
       <div className="card stack">
         <div className="nav-heading">MVP (chosen by your opponent, non-heroes only)</div>
@@ -304,10 +362,11 @@ export function EndBattle({ squad, onBack, fixedResult = null }) {
 
       <div className="card stack">
         <div className="nav-heading">EXP gained</div>
-        {units.map(u => (
+        {extraExp > 0 && <div className="muted small">Includes +{extraExp} each from the Will of the Force.</div>}
+        {staying.map(u => (
           <div key={u.id} className="row between small">
             <span>{u.name}{battle.units[u.id].ooa && <span className="warn"> · roll injury</span>}</span>
-            <b>+{battleExp(battle.units[u.id], u.id === mvp)}</b>
+            <b>+{exp(u)}</b>
           </div>
         ))}
       </div>
