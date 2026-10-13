@@ -103,7 +103,7 @@ export const SECTIONS = [
     name: 'Moving',
     sub: 'GH pp. 6-8',
     items: [
-      { title: 'Move rates (per action)', table: [['Walking', '5"'], ['Creeping', '3"'], ['Mounted', '8"'], ['Vehicle', '6"']], ref: 'GH p.6' },
+      { title: 'Move rates (per action)', table: [['Walking', '5"'], ['Creeping', '3"'], ['Vehicle', '6"']], ref: 'GH p.6' },
       { title: 'Movement penalties', list: [
         '-1" per wound and per shock marker, for every move action.',
         'Difficult terrain (woods, tall crops, marsh, shallow streams, rubble): half rate.',
@@ -127,7 +127,6 @@ export const SECTIONS = [
       { title: 'Buildings', list: [
         'Entering or leaving costs nothing unless a door is locked.',
         'Each floor up or down costs 3". Without interiors, measure stairs from where the model entered; it can come out anywhere on the roof.',
-        'Mounts cannot enter buildings.',
         'Agree what every piece of terrain does before the game.',
       ], ref: 'GH p.8' },
     ],
@@ -147,7 +146,6 @@ export const SECTIONS = [
         '-1 per Wound and Shock marker on the shooter',
         'Target Downed -1 / Target Creeping -1',
         'Shooter Aimed with its first action +2',
-        'Shooter mounted -1 / Target mounted -1 (GH only, not on your quick reference)',
       ], amended: 'Aim is now +2. GH: +1.', ref: 'GH p.10' },
       { title: 'Line of sight', text: [
         'You need a clear straight line not blocked by models or terrain. Agree it at eye level when unsure.',
@@ -190,7 +188,6 @@ export const SECTIONS = [
         'Close combat weapon: as the weapon says',
         'Defending a wall or defensive terrain: +1',
         'Charging +1 (from outside the 1" zone; not if already in combat)',
-        'Mounted fighting someone on foot +1 (GH only, not on your quick reference)',
       ], ref: 'GH p.14' },
       { title: 'Rolling a 1: Fumble', text: 'As well as whatever the opponent does to you, you lose that weapon for the rest of the game. Picking it back up takes an action and cannot be done within 1" of an enemy.', ref: 'GH p.13' },
       { title: 'Multiple combatants', text: 'When a model joins a fight, everyone involved rolls again. Each pair compares totals separately, so a model can beat one opponent and lose to another.', ref: 'GH p.13' },
@@ -242,7 +239,7 @@ export const SECTIONS = [
     name: 'Other Actions',
     sub: 'GH pp. 6, 18, 20',
     items: [
-      { title: 'What counts as an action', text: 'Each activation gives two actions, in any order and possibly the same twice: move, shoot, pick up or drop something, mount or dismount, switch weapons, recover, aim, reload, attempt a task, or anything else everyone agrees on.', ref: 'GH p.6' },
+      { title: 'What counts as an action', text: 'Each activation gives two actions, in any order and possibly the same twice: move, shoot, pick up or drop something, switch weapons, recover, aim, reload, attempt a task, or anything else everyone agrees on.', ref: 'GH p.6' },
       { title: 'Aim', text: 'Spend your first action aiming to get +2 on a shot with your second.', amended: 'GH: +1.', ref: 'GH p.10' },
       { title: 'Reload', text: 'Both actions of one activation, back to back. A 6 card reloads automatically and keeps both actions.', ref: 'GH p.9' },
       { title: 'Ready', list: [
