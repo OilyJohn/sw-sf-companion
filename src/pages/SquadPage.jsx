@@ -15,8 +15,11 @@ export default function SquadPage() {
 
 const isHero = u => u.role !== 'regular';
 const isLost = u => u.status === 'dead';
+// An officer who takes over from a dead leader gains only the Leader trait, not the leader bonuses.
+const isLeader = u => u.role === 'leader' || (u.traits ?? []).some(t => t.name === 'Leader');
+const rankOf = u => (isLeader(u) ? 'leader' : u.role);
 const RANK = { leader: 0, officer: 1, regular: 2 };
-const byRankThenExp = (a, b) => (RANK[a.role] ?? 3) - (RANK[b.role] ?? 3) || b.exp - a.exp;
+const byRankThenExp = (a, b) => (RANK[rankOf(a)] ?? 3) - (RANK[rankOf(b)] ?? 3) || b.exp - a.exp;
 
 // Starting company only: each base slot left unfilled refunds 1 credit (role bonus slots don't count).
 const emptyBaseSlots = (profile, items) => Math.max(0, profile.eq - slotsUsed(items));
@@ -49,7 +52,7 @@ function Squad() {
   const active = squad.units.filter(u => !isLost(u));
   const heroes = active.filter(isHero).length;
   const forceUsers = active.filter(u => FORCE_UNITS.has(u.type)).length;
-  const hasLeader = active.some(u => u.role === 'leader');
+  const hasLeader = active.some(isLeader);
 
   const armoury = squad.armoury ?? [];
   const save = patch => saveSquad(squad.id, patch);
@@ -139,10 +142,10 @@ function Squad() {
         {squad.battle && <Link className="btn wide banner" to={`/battle/${squad.id}`}>Battle in progress: open tracker</Link>}
         {squad.backToShip && <Link className="btn wide banner" to={`/squads/${squad.id}/ship`}>Back to the Ship: to-do list</Link>}
         {!squad.started && mine && (
-          <p className="muted small">
-            Starting company: empty equipment slots refund 1 credit each until you mark the squad as started.{' '}
-            <button className="link-btn" onClick={() => confirm('Lock in your starting company?') && save({ started: true })}>Mark as started</button>
-          </p>
+          <p className="muted small">Starting company: empty equipment slots refund 1 credit each until you confirm the squad at the bottom of the page.</p>
+        )}
+        {squad.started && mine && !hasLeader && active.some(u => u.role === 'officer') && (
+          <div className="warn small">Your leader is dead. Open an officer and choose "Make leader".</div>
         )}
       </div>
 
@@ -151,6 +154,8 @@ function Squad() {
           <UnitCard key={unit.id} unit={unit} squad={squad} mine={mine}
             onChange={patch => updateUnit(unit.id, patch)}
             onRole={role => setRole(unit, role)}
+            canSucceed={squad.started && !hasLeader && unit.role === 'officer' && !isLost(unit)}
+            onSucceed={() => updateUnit(unit.id, { traits: [...unit.traits, { name: 'Leader', pts: 0 }] })}
             onEquip={items => setEquipment(unit, items)}
             onStash={i => stashGear(unit, i)}
             onTake={item => takeGear(unit, item)}
@@ -178,6 +183,12 @@ function Squad() {
         </div>
       )}
 
+      {mine && !squad.started && (
+        <button className="btn wide big" onClick={() => confirm('Confirm your starting squad? Roles are locked after this.') && save({ started: true })}>
+          Confirm starting squad
+        </button>
+      )}
+
       {mine && (
         <button className="btn danger ghost wide" onClick={async () => {
           if (confirm(`Delete ${squad.name}? This can't be undone.`)) { await deleteSquad(squad.id); navigate('/squads'); }
@@ -191,7 +202,7 @@ function Stat({ label, value }) {
   return <div className="stat"><div className="stat-value">{value}</div><div className="stat-label">{label}</div></div>;
 }
 
-function UnitCard({ unit, squad, mine, onChange, onRole, onEquip, onStash, onTake, onRemove }) {
+function UnitCard({ unit, squad, mine, onChange, onRole, canSucceed, onSucceed, onEquip, onStash, onTake, onRemove }) {
   const [open, setOpen] = useState(false);
   const st = unitStats(unit, squad.faction);
   if (!st) return <div className="card warn">Unknown unit type: {unit.type}</div>;
@@ -201,7 +212,7 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEquip, onStash, onTak
       <button className="unit-head" onClick={() => setOpen(o => !o)}>
         <div>
           <strong>{unit.name}</strong>
-          {unit.role !== 'regular' && <span className={`tag ${unit.role}`}>{unit.role}</span>}
+          {unit.role !== 'regular' && <span className={`tag ${rankOf(unit)}`}>{rankOf(unit)}</span>}
           {unit.temp && <span className="tag">This mission only</span>}
           {unit.status !== 'ready' && <span className="tag">{unit.status}</span>}
           <div className="muted small">{unit.type}</div>
@@ -231,13 +242,20 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEquip, onStash, onTak
           {mine && <>
             <label>Name<input value={unit.name} onChange={e => onChange({ name: e.target.value })} /></label>
             <label>Model notes<input value={unit.model} placeholder="e.g. red pauldron" onChange={e => onChange({ model: e.target.value })} /></label>
-            <label>Role
-              <select value={unit.role} onChange={e => onRole(e.target.value)}>
-                <option value="regular">Regular</option>
-                <option value="officer">Officer (hero)</option>
-                <option value="leader">Leader (hero)</option>
-              </select>
-            </label>
+            {!squad.started && (
+              <label>Role
+                <select value={unit.role} onChange={e => onRole(e.target.value)}>
+                  <option value="regular">Regular</option>
+                  <option value="officer">Officer (hero)</option>
+                  <option value="leader">Leader (hero)</option>
+                </select>
+              </label>
+            )}
+            {canSucceed && (
+              <button className="btn" onClick={() => confirm(`Make ${unit.name} the new leader? They gain the Leader trait only.`) && onSucceed()}>
+                Make leader
+              </button>
+            )}
             {squad.started
               ? <GearSwap unit={unit} st={st} armoury={squad.armoury ?? []} onStash={onStash} onTake={onTake} />
               : (
@@ -400,7 +418,7 @@ function TraitList({ names }) {
             <b className="small">{n}</b>
             {tr?.text
               ? <div className="small">{tr.text}</div>
-              : <div className="small muted">No description in your docs (see the Galactic Heroes rulebook).</div>}
+              : <div className="small muted">No description yet.</div>}
             {tr?.amended && <div className="amended small">{tr.amended}</div>}
           </div>
         );
