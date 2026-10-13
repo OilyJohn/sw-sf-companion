@@ -91,7 +91,8 @@ input, select, textarea {
 .step { width: 40px; height: 40px; border-radius: 10px; background: var(--panel-2); font-size: 1.3rem; line-height: 1; }
 .small-btn { padding: 8px 12px; font-size: .85rem; }
 .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.roll-input { display: grid; grid-template-columns: auto auto 1fr auto; gap: 8px; align-items: center; }
+.roll-choice { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.roll-input { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; }
 .roll-input input { min-width: 0; }
 .btn.rolling { animation: die-shake .18s linear infinite; opacity: 1; min-width: 5.5em; }
 .die-face { display: inline-block; min-width: 2ch; font-variant-numeric: tabular-nums; }

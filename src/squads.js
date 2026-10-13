@@ -75,6 +75,12 @@ export function newUnit(profile, name) {
   };
 }
 
+// A Mercenary added for one mission by the Will of the Force (`temp` until hired).
+export function tempMerc(type) {
+  return { ...newUnit({ name: type }, type), temp: true };
+}
+export const withoutTemp = units => units.filter(u => !u.temp);
+
 export function unitStats(unit, factionId) {
   const p = findProfile(factionId, unit.type);
   if (!p) return null;

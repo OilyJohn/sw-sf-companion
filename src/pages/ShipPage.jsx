@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import ExpShift from '../components/ExpShift.jsx';
 import ResultPopup from '../components/ResultPopup.jsx';
 import RollInput from '../components/RollInput.jsx';
 import SignInGate from '../components/SignInGate.jsx';
@@ -9,7 +10,7 @@ import {
 } from '../data/campaign.js';
 import TodoTask from '../components/TodoTask.jsx';
 import { FORCE_UNITS } from '../data/rules.js';
-import { promotionOptions } from '../promotions.js';
+import { maxShift, promotionOptions } from '../promotions.js';
 import { saveSquad, useSquad } from '../squads.js';
 
 export default function ShipPage() {
@@ -38,6 +39,9 @@ function Ship() {
   });
 
   const allDone = !injuries.length && !promos.length;
+  // Will of the Force re-rolls still unused (lost when Back to the Ship is finished).
+  const rerolls = ship?.rerolls ?? {};
+  const useReroll = kind => saveSquad(squad.id, { [`backToShip.rerolls.${kind}`]: false });
 
   return (
     <div className="stack">
@@ -54,7 +58,7 @@ function Ship() {
       <Section n={1} title="Injuries" done={!injuries.length}>
         {injuries.length === 0 && <p className="muted small">No injury rolls left.</p>}
         {injuries.map(u => (
-          <InjuryRoll key={u.id} unit={u} onApply={(patch, credits = 0) => updateUnit(u.id, patch, {
+          <InjuryRoll key={u.id} unit={u} reroll={rerolls.injury && (() => useReroll('injury'))} onApply={(patch, credits = 0) => updateUnit(u.id, patch, {
             credits: squad.credits + credits,
             backToShip: { ...ship, injuries: ship.injuries.filter(x => x !== u.id) },
           })} />
@@ -64,12 +68,12 @@ function Ship() {
       <Section n={2} title="Promotions" done={!promos.length}>
         {promos.length === 0 && <p className="muted small">Nobody has a full EXP box ({EXP_PER_PROMOTION} EXP) waiting.</p>}
         {promos.map(u => (
-          <PromotionRoll key={u.id} unit={u} squad={squad}
+          <PromotionRoll key={u.id} unit={u} squad={squad} reroll={rerolls.promotion && (() => useReroll('promotion'))}
             onApply={patch => updateUnit(u.id, { ...patch, promotions: (u.promotions ?? 0) + 1 })} />
         ))}
         {promos.length > 0 && (
           <p className="muted small">
-            Spending excess EXP to shift a result? Enter the adjusted roll, then lower the unit's EXP on the squad page.
+            Excess EXP can shift a result up or down the table, 1 EXP per result.
             Regular units can shift by 1 at most and can't reach Promotion to Hero this way.
           </p>
         )}
@@ -113,9 +117,16 @@ function Section({ n, title, done, children }) {
   );
 }
 
-function InjuryRoll({ unit, onApply }) {
+// A Will of the Force re-roll, offered after an in-app or typed result until it's used.
+function WotfReroll({ reroll, onUse }) {
+  if (!reroll) return null;
+  return <button className="btn ghost" onClick={() => { reroll(); onUse(); }}>Re-roll (Will of the Force)</button>;
+}
+
+function InjuryRoll({ unit, onApply, reroll }) {
   const table = isHero(unit) ? HERO_INJURY : WARRIOR_INJURY;
   const [roll, setRoll] = useState(null);
+  const [irl, setIrl] = useState(false);
   const [popup, setPopup] = useState(false);
   const res = roll === null ? null : lookup(table, roll);
 
@@ -131,37 +142,44 @@ function InjuryRoll({ unit, onApply }) {
     <div className="sub">
       <div className="row between"><strong>{unit.name}</strong><span className="muted small">{table.name} ({table.dice})</span></div>
       {res === null ? (
-        <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={n => { setRoll(n); setPopup(true); }} />
+        <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={(n, typed) => { setRoll(n); setIrl(typed); setPopup(true); }} />
       ) : (
         <div className="stack">
           {popup && <ResultPopup heading={`${unit.name} rolled ${roll} on ${table.name}`} items={[{ title: res.name, text: res.text }]} onClose={() => setPopup(false)} />}
-          <div><b>{roll}: {res.name}.</b> <span className="small">{res.text}</span></div>
-          {res.effect?.choice === 'mystery' ? (
-            <div className="row gap">
-              <button className="btn" onClick={() => apply({ status: 'injured' })}>Bacta tank</button>
-              <button className="btn ghost" onClick={() => setRoll(null)}>Experimental treatment (re-roll)</button>
-            </div>
-          ) : (
-            <div className="row gap">
-              <button className="btn" onClick={() => apply()}>Apply</button>
-              <button className="btn ghost" onClick={() => setRoll(null)}>Re-roll</button>
-            </div>
-          )}
+          <div><b>{roll}: {res.name}.</b> <span className="small">{res.text}</span>
+            {irl && <> <button className="link-btn small" onClick={() => setRoll(null)}>change</button></>}</div>
+          <div className="row gap wrap">
+            {res.effect?.choice === 'mystery' ? (
+              <>
+                <button className="btn" onClick={() => apply({ status: 'injured' })}>Bacta tank</button>
+                <button className="btn ghost" onClick={() => setRoll(null)}>Experimental treatment (re-roll)</button>
+              </>
+            ) : <button className="btn" onClick={() => apply()}>Apply</button>}
+            <WotfReroll reroll={reroll} onUse={() => setRoll(null)} />
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-function PromotionRoll({ unit, squad, onApply }) {
+function PromotionRoll({ unit, squad, onApply, reroll }) {
   const force = FORCE_UNITS.has(unit.type);
   const table = isHero(unit)
     ? (force ? FORCE_HERO_PROMOTION : HERO_PROMOTION)
     : (force ? FORCE_REGULAR_PROMOTION : REGULAR_PROMOTION);
   const [roll, setRoll] = useState(null);
+  const [irl, setIrl] = useState(false);
+  const [shift, setShift] = useState(0);
   const [popup, setPopup] = useState(false);
-  const res = roll === null ? null : lookup(table, roll);
+  const rolled = roll === null ? null : lookup(table, roll);
+  const at = table.rows.indexOf(rolled);
+  const res = rolled && table.rows[at + shift];
   const options = res ? promotionOptions(res, unit, squad) : null;
+  // Regulars can't shift into Promotion to Hero.
+  const allowed = i => i >= 0 && i < table.rows.length && (isHero(unit) || !table.rows[i].effect?.hero);
+  const reset = () => { setRoll(null); setShift(0); };
+  const spend = patch => (shift ? { ...patch, exp: unit.exp - Math.abs(shift) } : patch);
 
   return (
     <div className="sub">
@@ -169,16 +187,20 @@ function PromotionRoll({ unit, squad, onApply }) {
         <strong>{unit.name}</strong>
         <span className="muted small">{unit.exp} EXP · {table.name}</span>
       </div>
-      {res === null ? (
-        <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={n => { setRoll(n); setPopup(true); }} />
+      {rolled === null ? (
+        <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={(n, typed) => { setRoll(n); setIrl(typed); setPopup(true); }} />
       ) : (
         <div className="stack">
-          {popup && <ResultPopup heading={`${unit.name} rolled ${roll} on ${table.name}`} items={[{ title: res.name, text: res.text }]} onClose={() => setPopup(false)} />}
-          <div><b>{roll}: {res.name}.</b> <span className="small">{res.text}</span></div>
+          {popup && <ResultPopup heading={`${unit.name} rolled ${roll} on ${table.name}`} items={[{ title: rolled.name, text: rolled.text }]} onClose={() => setPopup(false)} />}
+          <div className="small muted">Rolled {roll}{shift ? `, shifted ${Math.abs(shift)} ${shift > 0 ? 'up' : 'down'} for ${Math.abs(shift)} EXP` : ''}
+            {irl && <> <button className="link-btn small" onClick={reset}>change</button></>}</div>
+          <div><b>{res.min}-{res.max}: {res.name}.</b> <span className="small">{res.text}</span></div>
+          <ExpShift shift={shift} max={maxShift(unit)} canUp={allowed(at + shift + 1)} canDown={allowed(at + shift - 1)} onShift={setShift} />
           {options === null && <div className="warn small">Can't take this result here, so re-roll.</div>}
           <div className="row gap wrap">
-            {options?.map(([label, patch]) => <button key={label} className="btn" onClick={() => onApply(patch)}>{label}</button>)}
-            <button className="btn ghost" onClick={() => setRoll(null)}>Re-roll</button>
+            {options?.map(([label, patch]) => <button key={label} className="btn" onClick={() => onApply(spend(patch))}>{label}</button>)}
+            {options === null && <button className="btn ghost" onClick={reset}>Re-roll</button>}
+            <WotfReroll reroll={reroll} onUse={reset} />
           </div>
         </div>
       )}

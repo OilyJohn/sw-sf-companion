@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { db } from './firebase.js';
 import { SCENARIOS } from './data/campaign.js';
 import { rulesFor } from './data/scenarioRules.js';
+import { bonusCost } from './data/willOfTheForce.js';
 
 const battlesCol = collection(db, 'battles');
 const battleRef = code => doc(db, 'battles', code);
@@ -41,6 +42,7 @@ export function useMyBattles(uid) {
 const blankPlayer = user => ({
   name: user.displayName ?? 'Player', squadId: null, squadName: '', faction: '', points: 0,
   units: [], heroes: 0, hasMia: false, team: null, vote: null, ready: false,
+  wotf: [], merc: null, // Will of the Force bonus ids; merc: { id, type } for the Mercenary bonus
 });
 
 export async function createBattle(user) {
@@ -128,7 +130,9 @@ export const setTeamRole = (code, teamId, role) => updateLobby(code, b => ({
   teams: b.teams.map(t => (t.id === teamId ? { ...t, role } : t)),
 }));
 
-export const setRolled = (code, roll) => change(code, b => (b.status === 'lobby' ? { rolled: roll, players: unready(b.players) } : null));
+// irl: typed in from a real roll, so it can be corrected; in-app rolls can't be re-rolled.
+export const setRolled = (code, roll, irl = false) => change(code, b => (
+  b.status === 'lobby' ? { rolled: roll, rolledIrl: irl, players: unready(b.players) } : null));
 
 // The scenario everyone has agreed: all voted for the same one, or all voted to roll and it's been rolled.
 export function agreedScenario(b) {
@@ -139,6 +143,19 @@ export function agreedScenario(b) {
 }
 
 const activeTeams = b => b.teams.filter(t => Object.values(b.players).some(p => p.team === t.id));
+
+// Will of the Force: each team's points rating, the gap to the strongest other team,
+// and the bonus points its players have picked between them (they share the gap).
+export function wotfTeams(b) {
+  const teams = activeTeams(b).map(t => {
+    const members = Object.values(b.players).filter(p => p.team === t.id);
+    return { id: t.id, name: t.name, points: members.reduce((n, p) => n + (p.points ?? 0), 0), spent: members.reduce((n, p) => n + bonusCost(p.wotf), 0) };
+  });
+  return Object.fromEntries(teams.map(t => {
+    const strongest = Math.max(...teams.filter(o => o.id !== t.id).map(o => o.points));
+    return [t.id, { ...t, gap: Math.max(0, strongest - t.points) }];
+  }));
+}
 
 // What still stops the battle from starting, or [] when it can.
 export function startProblems(b) {
@@ -154,6 +171,10 @@ export function startProblems(b) {
     if (teams.some(t => !t.role)) problems.push('Every team needs to pick attack or defend.');
     else if (!teams.some(t => t.role === 'attack') || !teams.some(t => t.role === 'defend')) problems.push('There must be at least one attacking and one defending team.');
   }
+  Object.values(wotfTeams(b)).forEach(t => {
+    if (t.spent > t.gap) problems.push(`${t.name}'s Will of the Force bonuses (${t.spent} pts) are more than its ${t.gap} pt gap.`);
+  });
+  if (players.some(p => p.wotf?.includes('mercenary') && !p.merc?.type)) problems.push('Choose which Mercenary joins for the Will of the Force.');
   return problems;
 }
 
@@ -164,6 +185,13 @@ export const setReady = (code, uid, ready) => change(code, b => {
   const next = { ...b, players };
   if (!ready || Object.values(players).some(p => !p.ready) || startProblems(next).length) return { players };
   const teams = activeTeams(b).map(t => ({ ...t, role: rulesFor(agreedScenario(b)).roles ? t.role : null }));
+  const gaps = wotfTeams(b);
+  // Will of the Force Mercenaries join their player's units; each player's squad adds the unit itself.
+  Object.keys(players).forEach(k => {
+    const p = players[k];
+    const merc = p.wotf?.includes('mercenary') ? p.merc : null;
+    players[k] = { ...p, merc, wotfGap: gaps[p.team]?.gap ?? 0, units: merc ? [...p.units, merc.id] : p.units };
+  });
   return {
     players,
     teams,
