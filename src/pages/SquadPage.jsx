@@ -400,7 +400,7 @@ function TraitList({ names }) {
             <b className="small">{n}</b>
             {tr?.text
               ? <div className="small">{tr.text}</div>
-              : <div className="small muted">No description in your docs (see the Galactic Heroes rulebook).</div>}
+              : <div className="small muted">No description yet.</div>}
             {tr?.amended && <div className="amended small">{tr.amended}</div>}
           </div>
         );
