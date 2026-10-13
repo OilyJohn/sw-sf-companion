@@ -41,7 +41,8 @@ function Ship() {
   const allDone = !injuries.length && !promos.length;
   // Will of the Force re-rolls still unused (lost when Back to the Ship is finished).
   const rerolls = ship?.rerolls ?? {};
-  const useReroll = kind => saveSquad(squad.id, { [`backToShip.rerolls.${kind}`]: false });
+  const left = kind => Number(rerolls[kind] ?? 0);
+  const reroll = kind => left(kind) > 0 && { left: left(kind), use: () => saveSquad(squad.id, { [`backToShip.rerolls.${kind}`]: left(kind) - 1 }) };
 
   return (
     <div className="stack">
@@ -58,7 +59,7 @@ function Ship() {
       <Section n={1} title="Injuries" done={!injuries.length}>
         {injuries.length === 0 && <p className="muted small">No injury rolls left.</p>}
         {injuries.map(u => (
-          <InjuryRoll key={u.id} unit={u} reroll={rerolls.injury && (() => useReroll('injury'))} onApply={(patch, credits = 0) => updateUnit(u.id, patch, {
+          <InjuryRoll key={u.id} unit={u} reroll={reroll('injury')} onApply={(patch, credits = 0) => updateUnit(u.id, patch, {
             credits: squad.credits + credits,
             backToShip: { ...ship, injuries: ship.injuries.filter(x => x !== u.id) },
           })} />
@@ -68,7 +69,7 @@ function Ship() {
       <Section n={2} title="Promotions" done={!promos.length}>
         {promos.length === 0 && <p className="muted small">Nobody has a full EXP box ({EXP_PER_PROMOTION} EXP) waiting.</p>}
         {promos.map(u => (
-          <PromotionRoll key={u.id} unit={u} squad={squad} reroll={rerolls.promotion && (() => useReroll('promotion'))}
+          <PromotionRoll key={u.id} unit={u} squad={squad} reroll={reroll('promotion')}
             onApply={patch => updateUnit(u.id, { ...patch, promotions: (u.promotions ?? 0) + 1 })} />
         ))}
         {promos.length > 0 && (
@@ -117,10 +118,11 @@ function Section({ n, title, done, children }) {
   );
 }
 
-// A Will of the Force re-roll, offered after an in-app or typed result until it's used.
+// A Will of the Force re-roll, offered after an in-app or typed result until they're used up.
+// reroll: { left, use } or false.
 function WotfReroll({ reroll, onUse }) {
   if (!reroll) return null;
-  return <button className="btn ghost" onClick={() => { reroll(); onUse(); }}>Re-roll (Will of the Force)</button>;
+  return <button className="btn ghost" onClick={() => { reroll.use(); onUse(); }}>Re-roll (Will of the Force, {reroll.left} left)</button>;
 }
 
 function InjuryRoll({ unit, onApply, reroll }) {

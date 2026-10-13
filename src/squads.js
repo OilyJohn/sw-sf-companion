@@ -104,3 +104,7 @@ export function squadPoints(squad) {
     .filter(u => u.status === 'ready')
     .reduce((t, u) => t + (unitStats(u, squad.faction)?.points ?? 0), 0);
 }
+
+// Points of just the units taking part in a battle.
+export const unitsPoints = (squad, ids) =>
+  squad.units.filter(u => ids.includes(u.id)).reduce((t, u) => t + (unitStats(u, squad.faction)?.points ?? 0), 0);

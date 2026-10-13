@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { db } from './firebase.js';
 import { SCENARIOS } from './data/campaign.js';
 import { rulesFor } from './data/scenarioRules.js';
-import { bonusCost } from './data/willOfTheForce.js';
+import { bonusCost, countOf, wotfShares } from './data/willOfTheForce.js';
 
 const battlesCol = collection(db, 'battles');
 const battleRef = code => doc(db, 'battles', code);
@@ -42,7 +42,7 @@ export function useMyBattles(uid) {
 const blankPlayer = user => ({
   name: user.displayName ?? 'Player', squadId: null, squadName: '', faction: '', points: 0,
   units: [], heroes: 0, hasMia: false, team: null, vote: null, ready: false,
-  wotf: [], merc: null, // Will of the Force bonus ids; merc: { id, type } for the Mercenary bonus
+  wotf: [], mercs: [], // Will of the Force bonus ids; mercs: [{ id, type }] for each Mercenary bonus
 });
 
 export async function createBattle(user) {
@@ -144,17 +144,17 @@ export function agreedScenario(b) {
 
 const activeTeams = b => b.teams.filter(t => Object.values(b.players).some(p => p.team === t.id));
 
-// Will of the Force: each team's points rating, the gap to the strongest other team,
-// and the bonus points its players have picked between them (they share the gap).
-export function wotfTeams(b) {
-  const teams = activeTeams(b).map(t => {
-    const members = Object.values(b.players).filter(p => p.team === t.id);
-    return { id: t.id, name: t.name, points: members.reduce((n, p) => n + (p.points ?? 0), 0), spent: members.reduce((n, p) => n + bonusCost(p.wotf), 0) };
-  });
-  return Object.fromEntries(teams.map(t => {
-    const strongest = Math.max(...teams.filter(o => o.id !== t.id).map(o => o.points));
-    return [t.id, { ...t, gap: Math.max(0, strongest - t.points) }];
+// Will of the Force for a lobby: each team's points (units taking part) and each player's
+// share of their team's gap, as { teams: { [teamId]: points }, players: { [uid]: { teamGap, share } } }.
+export function wotfLobby(b) {
+  const teams = activeTeams(b).map(t => ({
+    id: t.id,
+    players: Object.entries(b.players).filter(([, p]) => p.team === t.id).map(([uid, p]) => ({ uid, points: p.points ?? 0 })),
   }));
+  return {
+    teams: Object.fromEntries(teams.map(t => [t.id, t.players.reduce((n, p) => n + p.points, 0)])),
+    players: wotfShares(teams),
+  };
 }
 
 // What still stops the battle from starting, or [] when it can.
@@ -171,10 +171,14 @@ export function startProblems(b) {
     if (teams.some(t => !t.role)) problems.push('Every team needs to pick attack or defend.');
     else if (!teams.some(t => t.role === 'attack') || !teams.some(t => t.role === 'defend')) problems.push('There must be at least one attacking and one defending team.');
   }
-  Object.values(wotfTeams(b)).forEach(t => {
-    if (t.spent > t.gap) problems.push(`${t.name}'s Will of the Force bonuses (${t.spent} pts) are more than its ${t.gap} pt gap.`);
+  const shares = wotfLobby(b).players;
+  Object.entries(b.players).forEach(([uid, p]) => {
+    const share = shares[uid]?.share ?? 0;
+    if (bonusCost(p.wotf) > share) problems.push(`${p.name}'s Will of the Force bonuses (${bonusCost(p.wotf)} pts) are more than their ${share} pt share.`);
   });
-  if (players.some(p => p.wotf?.includes('mercenary') && !p.merc?.type)) problems.push('Choose which Mercenary joins for the Will of the Force.');
+  if (players.some(p => (p.mercs ?? []).slice(0, countOf(p.wotf, 'mercenary')).filter(m => m?.type).length < countOf(p.wotf, 'mercenary'))) {
+    problems.push('Choose which Mercenary joins for each Will of the Force Mercenary bonus.');
+  }
   return problems;
 }
 
@@ -185,12 +189,12 @@ export const setReady = (code, uid, ready) => change(code, b => {
   const next = { ...b, players };
   if (!ready || Object.values(players).some(p => !p.ready) || startProblems(next).length) return { players };
   const teams = activeTeams(b).map(t => ({ ...t, role: rulesFor(agreedScenario(b)).roles ? t.role : null }));
-  const gaps = wotfTeams(b);
-  // Will of the Force Mercenaries join their player's units; each player's squad adds the unit itself.
+  const shares = wotfLobby(b).players;
+  // Will of the Force Mercenaries join their player's units; each player's squad adds the units itself.
   Object.keys(players).forEach(k => {
     const p = players[k];
-    const merc = p.wotf?.includes('mercenary') ? p.merc : null;
-    players[k] = { ...p, merc, wotfGap: gaps[p.team]?.gap ?? 0, units: merc ? [...p.units, merc.id] : p.units };
+    const mercs = (p.mercs ?? []).slice(0, countOf(p.wotf, 'mercenary'));
+    players[k] = { ...p, mercs, wotfGap: shares[k]?.share ?? 0, units: [...p.units, ...mercs.map(m => m.id)] };
   });
   return {
     players,

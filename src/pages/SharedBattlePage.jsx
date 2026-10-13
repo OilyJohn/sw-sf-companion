@@ -7,12 +7,12 @@ import { WotfPicker } from '../components/WillOfTheForce.jsx';
 import {
   abandonBattle, addTeam, agreedScenario, answerEnd, endTurn, joinBattle, leaveBattle, proposeEnd, removeTeam, ROLL,
   setFlag, setPlayer, setReady, setRolled, setScore, setTargetWounds, setTeamRole, shareLink, startProblems,
-  teamStates, useBattle, vote, wotfTeams,
+  teamStates, useBattle, vote, wotfLobby,
 } from '../battles.js';
 import { RESULTS, SCENARIOS } from '../data/campaign.js';
 import { rulesFor } from '../data/scenarioRules.js';
-import { blankWotf, bonusCost } from '../data/willOfTheForce.js';
-import { squadPoints, saveSquad, tempMerc, useMySquads, useSquadsById, withoutTemp } from '../squads.js';
+import { blankWotf } from '../data/willOfTheForce.js';
+import { saveSquad, squadPoints, tempMerc, unitStats, unitsPoints, useMySquads, useSquadsById, withoutTemp } from '../squads.js';
 import { blankTrack, Counter, EndBattle, Tracker } from './BattlePage.jsx';
 
 export default function SharedBattlePage() {
@@ -36,13 +36,13 @@ function SharedBattle() {
     const linked = mySquad.battle?.battleId === battle.id;
     if (battle.status === 'active' && !mySquad.battle && !mySquad.backToShip) {
       const opponents = Object.values(battle.players).filter(p => p.team !== me.team).map(p => p.squadName);
-      const merc = me.merc ? { ...tempMerc(me.merc.type), id: me.merc.id } : null;
+      const mercs = (me.mercs ?? []).map(m => ({ ...tempMerc(m.type), id: m.id }));
       saveSquad(mySquad.id, {
-        ...(merc ? { units: [...mySquad.units, merc] } : {}),
+        ...(mercs.length ? { units: [...mySquad.units, ...mercs] } : {}),
         battle: {
           battleId: battle.id, scenario: battle.scenario, opponent: opponents.join(', '), startedAt: battle.startedAt,
           units: Object.fromEntries(me.units.map(uid => [uid, { ...blankTrack }])),
-          ...(me.wotf?.length ? { wotf: blankWotf(me.wotfGap ?? 0, me.wotf, merc?.id ?? null) } : {}),
+          ...(me.wotf?.length ? { wotf: blankWotf(me.wotfGap ?? 0, me.wotf, mercs.map(m => m.id)) } : {}),
         },
       });
     }
@@ -108,7 +108,7 @@ function Lobby({ battle, uid }) {
   const players = Object.entries(battle.players);
   const allVotedRoll = players.every(([, p]) => p.vote === ROLL);
   const mia = players.filter(([, p]) => p.hasMia).map(([, p]) => p.squadName);
-  const wotf = wotfTeams(battle);
+  const wotf = wotfLobby(battle);
 
   return (
     <div className="stack">
@@ -125,7 +125,7 @@ function Lobby({ battle, uid }) {
           return (
             <div key={t.id} className="sub">
               <div className="row between">
-                <strong>{t.name}{wotf[t.id] && <span className="muted small"> · {wotf[t.id].points} pts</span>}</strong>
+                <strong>{t.name}{wotf.teams[t.id] !== undefined && <span className="muted small"> · {wotf.teams[t.id]} pts</span>}</strong>
                 <div className="row gap">
                   {me.team !== t.id && <button className="btn ghost small-btn" onClick={() => setPlayer(battle.id, uid, { team: t.id }).catch(fail)}>Join</button>}
                   {!members.length && battle.teams.length > 2 && <button className="link-btn small" onClick={() => removeTeam(battle.id, t.id).catch(fail)}>Remove</button>}
@@ -179,7 +179,7 @@ function Lobby({ battle, uid }) {
         {mia.length > 0 && <p className="warn small">{mia.join(', ')} {mia.length === 1 ? 'has' : 'have'} a unit M.I.A., so this mission must be a Rescue.</p>}
       </div>
 
-      {me.squadId && wotf[me.team] && <MyWotf battle={battle} uid={uid} team={wotf[me.team]} />}
+      {me.squadId && wotf.players[uid] && <MyWotf battle={battle} uid={uid} share={wotf.players[uid]} />}
 
       {problems.length > 0 && (
         <div className="card stack">
@@ -195,20 +195,22 @@ function Lobby({ battle, uid }) {
   );
 }
 
-// Will of the Force: the weaker team's players pick bonuses, sharing their team's gap.
-function MyWotf({ battle, uid, team }) {
+// Will of the Force: players on a weaker team pick bonuses from their share of the team's gap.
+function MyWotf({ battle, uid, share }) {
   const me = battle.players[uid];
   const mine = me.wotf ?? [];
+  const mercs = me.mercs ?? [];
   const teammates = Object.entries(battle.players).filter(([id, p]) => id !== uid && p.team === me.team).length;
-  const budget = team.gap - (team.spent - bonusCost(mine));
-  const onChange = (wotf, type) => setPlayer(battle.id, uid, {
-    wotf, merc: wotf.includes('mercenary') ? { id: me.merc?.id ?? crypto.randomUUID(), type } : null,
+  const onChange = (wotf, types) => setPlayer(battle.id, uid, {
+    wotf, mercs: types.map((type, i) => ({ id: mercs[i]?.id ?? crypto.randomUUID(), type })),
   }).catch(fail);
+  const intro = share.teamGap
+    ? (teammates ? `Your team's gap is ${share.teamGap} pts (points difference ÷ players per team). Your share, weighted to the weaker player, is ${share.share} pts.` : `You're outgunned by ${share.teamGap} pts.`)
+    : 'Your side is the strongest.';
   return (
     <div className="card stack">
       <div className="nav-heading">Will of the Force</div>
-      <WotfPicker gap={team.gap} budget={budget} picked={mine} mercType={me.merc?.type ?? null} onChange={onChange}
-        note={teammates ? `(the gap is shared with your team)` : ''} />
+      <WotfPicker budget={share.share} picked={mine} mercTypes={mercs.map(m => m.type)} onChange={onChange} intro={intro} />
     </div>
   );
 }
@@ -242,18 +244,18 @@ function MySquadPicker({ battle, uid }) {
 
   const pick = id => {
     const s = squads.find(x => x.id === id);
-    if (!s) return setPlayer(battle.id, uid, { squadId: null, squadName: '', faction: '', points: 0, units: [], heroes: 0, hasMia: false, wotf: [], merc: null }).catch(fail);
+    if (!s) return setPlayer(battle.id, uid, { squadId: null, squadName: '', faction: '', points: 0, units: [], heroes: 0, hasMia: false, wotf: [], mercs: [] }).catch(fail);
     const units = s.units.filter(u => u.status === 'ready');
     setPlayer(battle.id, uid, {
-      squadId: s.id, squadName: s.name, faction: s.faction, points: squadPoints(s),
+      squadId: s.id, squadName: s.name, faction: s.faction, points: unitsPoints(s, units.map(u => u.id)),
       units: units.map(u => u.id), heroes: units.filter(u => u.role !== 'regular').length,
-      hasMia: s.units.some(u => u.status === 'mia'), wotf: [], merc: null,
+      hasMia: s.units.some(u => u.status === 'mia'), wotf: [], mercs: [],
     }).catch(fail);
   };
   const toggle = id => {
     const picked = me.units.includes(id) ? me.units.filter(x => x !== id) : [...me.units, id];
     const heroes = squad.units.filter(u => picked.includes(u.id) && u.role !== 'regular').length;
-    setPlayer(battle.id, uid, { units: picked, heroes }).catch(fail);
+    setPlayer(battle.id, uid, { units: picked, heroes, points: unitsPoints(squad, picked) }).catch(fail);
   };
 
   return (
@@ -267,9 +269,10 @@ function MySquadPicker({ battle, uid }) {
       {ready.map(u => (
         <label key={u.id} className="check">
           <input type="checkbox" checked={me.units.includes(u.id)} onChange={() => toggle(u.id)} />
-          <span>{u.name} <span className="muted small">{u.type}</span></span>
+          <span>{u.name} <span className="muted small">{u.type} · {unitStats(u, squad.faction)?.points ?? '?'} pts</span></span>
         </label>
       ))}
+      {squad && <div className="small">Taking part: <b>{unitsPoints(squad, me.units)} pts</b> <span className="muted">({me.units.length} units)</span></div>}
       {squad?.units.filter(u => u.status === 'injured').map(u => (
         <div key={u.id} className="muted small">{u.name} is in the bacta tank and misses this mission.</div>
       ))}

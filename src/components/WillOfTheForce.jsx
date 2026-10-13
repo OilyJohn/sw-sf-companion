@@ -1,57 +1,78 @@
-import { MERC_BASE_UNITS, MIN_GAP, WOTF_BONUSES, bonusCost, findBonus } from '../data/willOfTheForce.js';
+import { MERC_BASE_UNITS, MIN_GAP, WOTF_BONUSES, bonusCost, countOf, findBonus } from '../data/willOfTheForce.js';
 import { saveSquad } from '../squads.js';
 
-// Pick Will of the Force bonuses up to `budget` points.
-// picked: bonus ids; mercType: the Mercenaries base unit chosen for the Mercenary bonus.
-export function WotfPicker({ gap, budget = gap, picked, mercType, onChange, note }) {
+// Pick Will of the Force bonuses (repeats allowed) up to `budget` points.
+// picked: bonus ids; mercTypes: one Mercenaries base unit per Mercenary bonus picked.
+export function WotfPicker({ budget, picked, mercTypes = [], onChange, intro }) {
   const spent = bonusCost(picked);
-  if (gap < MIN_GAP) {
-    return <p className="muted small">The points gap is {Math.max(0, gap)}, so no Will of the Force bonuses{gap > 0 ? ` (needs ${MIN_GAP}+)` : ''}.</p>;
+  if (budget < MIN_GAP) {
+    return <p className="muted small">{intro} That's {Math.max(0, budget)} pts, so no Will of the Force bonuses{budget > 0 ? ` (needs ${MIN_GAP}+)` : ''}.</p>;
   }
-  const toggle = id => onChange(picked.includes(id) ? picked.filter(x => x !== id) : [...picked, id], mercType);
+  const set = (next, types = mercTypes) => onChange(next, types.slice(0, countOf(next, 'mercenary')));
+  const add = id => set([...picked, id]);
+  const remove = id => { const i = picked.lastIndexOf(id); set(picked.filter((_, j) => j !== i)); };
+  const mercs = countOf(picked, 'mercenary');
   return (
     <div className="stack">
       <div className="small">
-        Outgunned by <b>{gap} pts</b>. Pick bonuses worth up to {budget} pts{note ? ` ${note}` : ''}.
+        {intro} Pick bonuses worth up to <b>{budget} pts</b>; you can pick the same one more than once.
         <span className={spent > budget ? 'warn' : 'muted'}> {spent}/{budget} used.</span>
       </div>
       {WOTF_BONUSES.map(b => {
-        const on = picked.includes(b.id);
+        const n = countOf(picked, b.id);
         return (
-          <label key={b.id} className="check">
-            <input type="checkbox" checked={on} disabled={!on && spent + b.pts > budget} onChange={() => toggle(b.id)} />
-            <span className="small"><b>{b.name}</b> ({b.pts}) <span className="muted">{b.text}</span></span>
-          </label>
+          <div key={b.id} className="counter">
+            <span className={`small ${n ? '' : 'muted'}`}><b>{b.name}</b> ({b.pts}) <span className="muted">{b.text}</span></span>
+            <div className="row gap">
+              <button className="icon-btn step" aria-label={`Remove ${b.name}`} disabled={!n} onClick={() => remove(b.id)}>−</button>
+              <b className="count">{n}</b>
+              <button className="icon-btn step" aria-label={`Add ${b.name}`} disabled={spent + b.pts > budget} onClick={() => add(b.id)}>+</button>
+            </div>
+          </div>
         );
       })}
-      {picked.includes('mercenary') && (
-        <label className="small">Mercenary
-          <select value={mercType ?? ''} onChange={e => onChange(picked, e.target.value || null)}>
+      {Array.from({ length: mercs }, (_, i) => (
+        <label key={i} className="small">Mercenary{mercs > 1 ? ` ${i + 1}` : ''}
+          <select value={mercTypes[i] ?? ''} onChange={e => {
+            const types = [...mercTypes];
+            types[i] = e.target.value || null;
+            set(picked, types);
+          }}>
             <option value="">Choose a base unit…</option>
             {MERC_BASE_UNITS.map(u => <option key={u.name} value={u.name}>{u.name} ({u.pts} pts)</option>)}
           </select>
         </label>
-      )}
+      ))}
     </div>
   );
 }
+
+// True when every Mercenary bonus has a unit chosen.
+export const mercsChosen = (picked, mercTypes = []) =>
+  Array.from({ length: countOf(picked, 'mercenary') }, (_, i) => mercTypes[i]).every(Boolean);
 
 // During a battle: the bonuses this squad has, with the once-per-mission ones to tick off.
 export function WotfPanel({ squad }) {
   const wotf = squad.battle?.wotf;
   if (!wotf?.bonuses.length) return null;
-  const use = (id, v) => saveSquad(squad.id, { [`battle.wotf.used.${id}`]: v });
+  const setUsed = (id, n) => saveSquad(squad.id, { [`battle.wotf.used.${id}`]: n });
   return (
     <div className="card stack">
       <div className="nav-heading">Will of the Force</div>
-      {wotf.bonuses.map(id => {
+      {[...new Set(wotf.bonuses)].map(id => {
         const b = findBonus(id);
-        const used = !!wotf.used?.[id];
+        const have = countOf(wotf.bonuses, id);
+        const used = Number(wotf.used?.[id] ?? 0);
         return (
           <div key={id} className="row between">
-            <span className={`small ${used ? 'muted' : ''}`}><b>{b.name}</b> <span className="muted">{b.text}</span></span>
+            <span className="small"><b>{b.name}{have > 1 ? ` ×${have}` : ''}</b> <span className="muted">{b.text}</span></span>
             {b.inBattle && (
-              <button className={`btn small-btn ${used ? 'ghost' : ''}`} onClick={() => use(id, !used)}>{used ? 'Used' : 'Use'}</button>
+              <div className="row gap">
+                {used > 0 && <button className="link-btn small" onClick={() => setUsed(id, used - 1)}>undo</button>}
+                <button className="btn small-btn" disabled={used >= have} onClick={() => setUsed(id, used + 1)}>
+                  {used >= have ? 'Used' : `Use (${have - used} left)`}
+                </button>
+              </div>
             )}
           </div>
         );
