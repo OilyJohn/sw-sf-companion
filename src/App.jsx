@@ -8,6 +8,7 @@ import FactionsPage from './pages/FactionsPage.jsx';
 import BattlePage from './pages/BattlePage.jsx';
 import RulesPage from './pages/RulesPage.jsx';
 import ShipPage from './pages/ShipPage.jsx';
+import TraitsPage from './pages/TraitsPage.jsx';
 
 const NAV = [
   { section: 'Squad Management', links: [
@@ -15,7 +16,10 @@ const NAV = [
     { to: '/factions', label: 'Factions & Units' },
   ] },
   { section: 'During a Battle', links: [{ to: '/battle', label: 'Battle Tracker' }] },
-  { section: 'Rules Clarifications', links: [{ to: '/rules', label: 'Rules Reference' }] },
+  { section: 'Rules Clarifications', links: [
+    { to: '/rules/traits', label: 'Traits' },
+    { to: '/rules', label: 'Rules Reference', end: true },
+  ] },
 ];
 
 export default function App() {
@@ -36,7 +40,7 @@ export default function App() {
         {NAV.map(s => (
           <div key={s.section} className="nav-section">
             <div className="nav-heading">{s.section}</div>
-            {s.links.map(l => <NavLink key={l.to} to={l.to}>{l.label}</NavLink>)}
+            {s.links.map(l => <NavLink key={l.to} to={l.to} end={l.end}>{l.label}</NavLink>)}
           </div>
         ))}
         <div className="nav-footer">
@@ -61,6 +65,7 @@ export default function App() {
           <Route path="/battle" element={<BattlePage />} />
           <Route path="/battle/:id" element={<BattlePage />} />
           <Route path="/rules" element={<RulesPage />} />
+          <Route path="/rules/traits" element={<TraitsPage />} />
         </Routes>
       </main>
     </div>

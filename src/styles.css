@@ -96,3 +96,11 @@ input, select, textarea {
 .sub { padding: 10px 0; border-top: 1px solid var(--border); display: grid; gap: 8px; }
 .sub:first-of-type { border-top: 0; }
 .wrap { flex-wrap: wrap; }
+
+.section-head { all: unset; display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; cursor: pointer; }
+.trait-list { display: grid; gap: 0; margin-top: 10px; }
+.trait { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--border); }
+.roll { display: inline-block; min-width: 4.2em; margin-right: 6px; color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
+.amended { color: var(--hero); }
+.levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
+.level { background: var(--panel-2); border-radius: 8px; padding: 6px; display: grid; gap: 2px; text-align: center; }
