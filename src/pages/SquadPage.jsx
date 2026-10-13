@@ -66,11 +66,12 @@ function Squad() {
     });
   }
 
-  function buy(type, name, equipment) {
+  function buy(type, name, equipment, role) {
     const profile = findProfile(squad.faction, type);
     const emptySlots = squad.started ? 0 : emptyBaseSlots(profile, equipment);
     const cost = faction.reinforcements[type] - emptySlots;
-    save({ credits: squad.credits - cost, units: [...squad.units, { ...newUnit(profile, name), equipment, emptySlots }] });
+    const hero = role === 'regular' ? {} : { role, pending: [ROLE_BONUS[role].pending] };
+    save({ credits: squad.credits - cost, units: [...squad.units, { ...newUnit(profile, name), ...hero, equipment, emptySlots }] });
     setAdding(false);
   }
 
@@ -109,12 +110,16 @@ function Squad() {
     updateUnit(unit.id, { role, pending: role === 'regular' ? [] : [ROLE_BONUS[role].pending] });
   }
 
+  // A new squad adds its leader, then its officer, so their bonus slots show when picking kit.
+  const hasOfficer = active.some(u => u.role === 'officer');
+  const nextRole = squad.started ? 'regular' : !hasLeader ? 'leader' : !hasOfficer ? 'officer' : 'regular';
+
   const warnings = [];
   if (squad.credits < 0) warnings.push(`Over budget by ${-squad.credits} credits.`);
   if (heroes > MAX_HEROES) warnings.push(`More than ${MAX_HEROES} heroes.`);
   if (forceUsers > MAX_FORCE_WIELDERS) warnings.push(`More than ${MAX_FORCE_WIELDERS} force wielders.`);
   if (active.length && !hasLeader) warnings.push('Choose a leader.');
-  if (active.length && !active.some(u => u.role === 'officer') && !squad.started) warnings.push('Choose an officer.');
+  if (active.length && !hasOfficer && !squad.started) warnings.push('Choose an officer.');
 
   return (
     <>
@@ -154,11 +159,11 @@ function Squad() {
       </div>
 
       {mine && (adding
-        ? <BuyUnit faction={faction} factionId={squad.faction} started={squad.started} credits={squad.credits} forceFull={forceUsers >= MAX_FORCE_WIELDERS} onBuy={buy} onCancel={() => setAdding(false)} />
+        ? <BuyUnit faction={faction} factionId={squad.faction} started={squad.started} role={nextRole} credits={squad.credits} forceFull={forceUsers >= MAX_FORCE_WIELDERS} onBuy={buy} onCancel={() => setAdding(false)} />
         : (
           <div className="card stack" id="spend">
             <div className="row between"><h2>{squad.started ? 'Spend credits' : 'Starting company'}</h2><span className="pill">{squad.credits} credits</span></div>
-            <button className="btn wide" onClick={() => setAdding(true)}>{squad.started ? '+ Buy unit' : '+ Add unit'}</button>
+            <button className="btn wide" onClick={() => setAdding(true)}>{squad.started ? '+ Buy unit' : `+ Add ${nextRole === 'regular' ? 'unit' : `your ${nextRole}`}`}</button>
             {squad.started
               ? <BuyGear squad={squad} onBuy={buyGear} />
               : <p className="muted small">Add units with their starting kit until you mark the squad as started. After that, new units and gear are bought here with credits.</p>}
@@ -268,18 +273,26 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEquip, onStash, onTak
   );
 }
 
-function BuyUnit({ faction, factionId, started, credits, forceFull, onBuy, onCancel }) {
+function BuyUnit({ faction, factionId, started, role, credits, forceFull, onBuy, onCancel }) {
   const [type, setType] = useState(Object.keys(faction.reinforcements)[0]);
   const [name, setName] = useState('');
   const [equipment, setEquipment] = useState([]);
   const profile = findProfile(factionId, type);
+  const slots = profile.eq + (ROLE_BONUS[role]?.eqSlots ?? 0);
   const empty = started ? 0 : emptyBaseSlots(profile, equipment);
   const cost = faction.reinforcements[type] - empty;
   const blocked = FORCE_UNITS.has(type) && forceFull;
 
   return (
-    <form className="card stack" onSubmit={e => { e.preventDefault(); onBuy(type, name.trim() || type, equipment); }}>
-      <h2>{started ? 'Buy unit' : 'Add unit'}</h2>
+    <form className="card stack" onSubmit={e => { e.preventDefault(); onBuy(type, name.trim() || type, equipment, role); }}>
+      <h2>{started ? 'Buy unit' : role === 'regular' ? 'Add unit' : `Add your ${role}`}</h2>
+      {role !== 'regular' && (
+        <p className="muted small">
+          {role === 'leader'
+            ? 'Your leader gets +1 wound, +1 equipment slot, the Leader trait and a trait roll.'
+            : 'Your officer gets +1 wound and a general trait roll.'}
+        </p>
+      )}
       <label>Unit
         <select value={type} onChange={e => { setType(e.target.value); setEquipment([]); }}>
           {Object.entries(faction.reinforcements).map(([t, c]) => <option key={t} value={t}>{t} ({c} credits)</option>)}
@@ -287,10 +300,10 @@ function BuyUnit({ faction, factionId, started, credits, forceFull, onBuy, onCan
       </label>
       <label>Name<input value={name} placeholder={type} onChange={e => setName(e.target.value)} /></label>
       <div className="small">Starting equipment</div>
-      <EquipmentPicker allowed={profile.equipment} slots={profile.eq} value={equipment} onChange={setEquipment} />
+      <EquipmentPicker allowed={profile.equipment} slots={slots} value={equipment} onChange={setEquipment} />
       <p className="muted small">
         Costs {cost} credits{empty > 0 ? ` (${empty} back for empty slots)` : ''}, leaving {credits - cost}.
-        {started && slotsUsed(equipment) < profile.eq && ' Empty slots only refund credits in the starting company.'}
+        {started && slotsUsed(equipment) < slots && ' Empty slots only refund credits in the starting company.'}
       </p>
       {blocked && <p className="warn small">Your squad already has {MAX_FORCE_WIELDERS} force wielders.</p>}
       <div className="row gap">
