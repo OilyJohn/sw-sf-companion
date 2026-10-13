@@ -134,8 +134,8 @@ export const TRAIT_TABLES = [
     ],
   },
   {
-    id: 'force-powers', name: 'Force Powers', dice: 'D10', source: 'JS',
-    note: 'Labelled D10 in the doc, but entries run 1-12. 6 differs for dark side (DS) and light side (LS).',
+    id: 'force-powers', name: 'Force Powers', dice: 'D12', source: 'JS',
+    note: '6 differs for dark side (DS) and light side (LS).',
     traits: [
       t('1', 'Jump', 1, 'Use 2 actions to jump to a surface that’s no more than 8" away in a straight line.'),
       t('2', 'Sprint', 1, 'When using both actions to move, gain an extra 3" of movement (total).'),
