@@ -34,7 +34,23 @@ export const EQUIPMENT_SLOTS = {
   'Tower Shield': 1, // GH
   'Jet Pack': 2, // GH
   'Ewok Glider': 2, // works like a jet pack (Alex)
+  // In the Weapons doc but on no unit profile: heroes can still buy them.
+  'Blunt Weapon': 1,
+  '2H Sword': 2,
+  '2H Blunt Weapon': 2,
+  'Stun Baton': 1,
+  'Force Pike': 2,
+  'Double Bladed Lightsaber': 3,
+  'Sniper': 3,
+  'Minigun': 3,
+  'Flamethrower': 3,
+  'Rocket Launcher': 3,
 };
+
+// Heroes can't buy these unless they have the Weapons Specialist trait.
+export const SPECIALIST = new Set(['Sniper', 'Minigun', 'Flamethrower', 'Rocket Launcher']);
+
+export const GEAR_COST_PER_SLOT = { regular: 1, hero: 2 };
 
 export const slotsOf = item => EQUIPMENT_SLOTS[item] ?? 1;
 export const slotsUsed = items => (items ?? []).reduce((t, i) => t + slotsOf(i), 0);
