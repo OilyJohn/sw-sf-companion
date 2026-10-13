@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { SCENARIO_CHOOSING, SCENARIOS } from '../data/campaign.js';
 
 const LIST = SCENARIOS.filter(s => s.roll);
@@ -22,7 +21,6 @@ export default function ScenariosPage() {
 
   return (
     <div className="stack">
-      <Link to="/rules" className="small">← Rules</Link>
       <input type="search" placeholder="Search scenarios, e.g. crate" value={query} onChange={e => setQuery(e.target.value)} />
 
       {showChoosing && (

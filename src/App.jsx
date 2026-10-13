@@ -22,7 +22,7 @@ const NAV = [
   { section: 'Rules Clarifications', links: [
     { to: '/rules/traits', label: 'Traits' },
     { to: '/rules/scenarios', label: 'Scenarios' },
-    { to: '/rules', label: 'Rules Reference', end: true },
+    { to: '/rules', label: 'Gameplay Rules', end: true },
   ] },
   { section: 'Documents & Resources', links: [{ to: '/documents', label: 'PDFs' }] },
 ];
