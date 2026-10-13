@@ -9,8 +9,8 @@ export const QUICK_REFERENCE = [
   { title: 'Special Cards', table: [
     ['Queen of Spades', 'Remove all Shock'],
     ['Queen of Hearts', 'Remove 1 Wound, once per unit, gets more difficult each time D10 (2+, 4+, 6+, 8+, 10)'],
-    ['One Eyed Jacks', '+1 Shoot rolls'],
-    ['Other Jacks', '+1 to Close Combat rolls'],
+    ['One Eyed Jacks (♥ ♠)', '+1 Shoot rolls'],
+    ['Other Jacks (♦ ♣)', '+1 to Close Combat rolls'],
     ['7 cards', 'Reroll one die result'],
     ['6 cards', 'Reload automatically'],
     ['Deuce', 'Roll 2 dice, pick the best result'],
