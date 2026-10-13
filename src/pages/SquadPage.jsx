@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import SignInGate from '../components/SignInGate.jsx';
+import TodoTask from '../components/TodoTask.jsx';
 import { MAX_FORCE_WIELDERS, MAX_HEROES } from '../data/factions.js';
 import { FORCE_UNITS, ROLE_BONUS, findProfile, getFaction } from '../data/rules.js';
 import { deleteSquad, newUnit, saveSquad, squadPoints, unitStats, useSquad } from '../squads.js';
@@ -145,7 +146,13 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEmpty, onRemove }) {
         <span>EXP <b>{unit.exp}</b></span>
       </div>
       {st.traits.length > 0 && <div className="small"><span className="muted">Traits: </span>{st.traits.join(', ')}</div>}
-      {unit.pending?.length > 0 && unit.pending.map(p => <div key={p} className="warn small">To do: {p}</div>)}
+      {unit.pending?.length > 0 && (mine
+        ? unit.pending.map((p, i) => (
+          <TodoTask key={i + p} unit={unit} squad={squad} text={p} onDone={patch => onChange({
+            ...patch, pending: [...unit.pending.filter((_, j) => j !== i), ...(patch.pending ?? [])],
+          })} />
+        ))
+        : unit.pending.map(p => <div key={p} className="warn small">To do: {p}</div>))}
 
       {open && (
         <div className="stack unit-body">

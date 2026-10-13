@@ -42,7 +42,7 @@ const TODOS = {
   'Roll on the Close Combat or Shooting trait table': { kind: 'trait', tables: ['cc', 'shooting'] },
   'Roll on the Force Powers table': { kind: 'trait', tables: ['force-powers'] },
   'Choose a Force Power': { kind: 'trait', tables: ['force-powers'], choose: true },
-  // The docs have no Leader Only table, so this uses Hero Only until Alex says otherwise.
+  // Leader Only and Hero Only are the same table (confirmed by Alex).
   'Roll for a Leader Only trait': { kind: 'trait', tables: ['hero'] },
   'Roll on the Hero Only trait table or become a Weapons Specialist': {
     kind: 'trait', tables: ['hero'], alt: { label: 'Become a Weapons Specialist', trait: { name: 'Weapons Specialist', pts: 0 } },
