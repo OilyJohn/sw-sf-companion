@@ -4,7 +4,9 @@ import { useAuth } from '../auth.jsx';
 import SignInGate from '../components/SignInGate.jsx';
 import TodoTask from '../components/TodoTask.jsx';
 import { MAX_FORCE_WIELDERS, MAX_HEROES } from '../data/factions.js';
+import { EQUIPMENT_SLOTS, GEAR_COST_PER_SLOT, SPECIALIST, slotsOf, slotsUsed } from '../data/equipment.js';
 import { FORCE_UNITS, ROLE_BONUS, findProfile, getFaction } from '../data/rules.js';
+import { findTrait } from '../data/traits.js';
 import { deleteSquad, newUnit, saveSquad, squadPoints, unitStats, useSquad } from '../squads.js';
 
 export default function SquadPage() {
@@ -13,6 +15,24 @@ export default function SquadPage() {
 
 const isHero = u => u.role !== 'regular';
 const isLost = u => u.status === 'dead';
+const RANK = { leader: 0, officer: 1, regular: 2 };
+const byRankThenExp = (a, b) => (RANK[a.role] ?? 3) - (RANK[b.role] ?? 3) || b.exp - a.exp;
+
+// Starting company only: each base slot left unfilled refunds 1 credit (role bonus slots don't count).
+const emptyBaseSlots = (profile, items) => Math.max(0, profile.eq - slotsUsed(items));
+
+const without = (items, i) => items.filter((_, j) => j !== i);
+const removeOne = (items, item) => without(items, items.indexOf(item));
+const fits = (unit, st, item) => slotsUsed(unit.equipment) + slotsOf(item) <= st.eqSlots;
+const gearCost = (unit, item) => slotsOf(item) * GEAR_COST_PER_SLOT[isHero(unit) ? 'hero' : 'regular'];
+
+// Regulars use their profile's gear (plus a lightsaber once force sensitive). Heroes can buy any
+// gear except specialist weapons, unless they're a Weapons Specialist.
+function buyableGear(unit, st) {
+  if (!isHero(unit)) return [...st.profile.equipment, ...(st.traits.includes('Force Sensitive') ? ['Lightsaber'] : [])];
+  const specialist = st.traits.includes('Weapons Specialist');
+  return Object.keys(EQUIPMENT_SLOTS).filter(g => specialist || !SPECIALIST.has(g)).sort();
+}
 
 function Squad() {
   const { id } = useParams();
@@ -31,23 +51,49 @@ function Squad() {
   const forceUsers = active.filter(u => FORCE_UNITS.has(u.type)).length;
   const hasLeader = active.some(u => u.role === 'leader');
 
+  const armoury = squad.armoury ?? [];
   const save = patch => saveSquad(squad.id, patch);
   const updateUnit = (unitId, patch) =>
     save({ units: squad.units.map(u => (u.id === unitId ? { ...u, ...patch } : u)) });
 
-  // Credits: in the starting phase, each empty equipment slot refunds 1 credit.
-  function setEmptySlots(unit, n) {
-    const delta = n - unit.emptySlots;
+  // In the starting phase, changing equipment re-works the empty-slot refund.
+  function setEquipment(unit, equipment) {
+    if (squad.started) return updateUnit(unit.id, { equipment });
+    const emptySlots = emptyBaseSlots(findProfile(squad.faction, unit.type), equipment);
     save({
-      credits: squad.credits + delta,
-      units: squad.units.map(u => (u.id === unit.id ? { ...u, emptySlots: n } : u)),
+      credits: squad.credits + emptySlots - unit.emptySlots,
+      units: squad.units.map(u => (u.id === unit.id ? { ...u, equipment, emptySlots } : u)),
     });
   }
 
-  function buy(type, name) {
-    const cost = faction.reinforcements[type];
-    save({ credits: squad.credits - cost, units: [...squad.units, newUnit(findProfile(squad.faction, type), name)] });
+  function buy(type, name, equipment) {
+    const profile = findProfile(squad.faction, type);
+    const emptySlots = squad.started ? 0 : emptyBaseSlots(profile, equipment);
+    const cost = faction.reinforcements[type] - emptySlots;
+    save({ credits: squad.credits - cost, units: [...squad.units, { ...newUnit(profile, name), equipment, emptySlots }] });
     setAdding(false);
+  }
+
+  // After the first mission gear never refunds: it goes to the armoury, where regulars can take it.
+  function stashGear(unit, i) {
+    save({
+      armoury: [...armoury, unit.equipment[i]],
+      units: squad.units.map(u => (u.id === unit.id ? { ...u, equipment: without(u.equipment, i) } : u)),
+    });
+  }
+
+  function takeGear(unit, item) {
+    save({
+      armoury: removeOne(armoury, item),
+      units: squad.units.map(u => (u.id === unit.id ? { ...u, equipment: [...(u.equipment ?? []), item] } : u)),
+    });
+  }
+
+  function buyGear(unit, item) {
+    save({
+      credits: squad.credits - gearCost(unit, item),
+      units: squad.units.map(u => (u.id === unit.id ? { ...u, equipment: [...(u.equipment ?? []), item] } : u)),
+    });
   }
 
   function remove(unit) {
@@ -96,18 +142,36 @@ function Squad() {
       </div>
 
       <div className="stack">
-        {squad.units.map(unit => (
+        {[...squad.units].sort(byRankThenExp).map(unit => (
           <UnitCard key={unit.id} unit={unit} squad={squad} mine={mine}
             onChange={patch => updateUnit(unit.id, patch)}
             onRole={role => setRole(unit, role)}
-            onEmpty={n => setEmptySlots(unit, n)}
+            onEquip={items => setEquipment(unit, items)}
+            onStash={i => stashGear(unit, i)}
+            onTake={item => takeGear(unit, item)}
             onRemove={() => remove(unit)} />
         ))}
       </div>
 
       {mine && (adding
-        ? <BuyUnit faction={faction} credits={squad.credits} forceFull={forceUsers >= MAX_FORCE_WIELDERS} onBuy={buy} onCancel={() => setAdding(false)} />
-        : <button className="btn wide" onClick={() => setAdding(true)}>+ Add unit</button>)}
+        ? <BuyUnit faction={faction} factionId={squad.faction} started={squad.started} credits={squad.credits} forceFull={forceUsers >= MAX_FORCE_WIELDERS} onBuy={buy} onCancel={() => setAdding(false)} />
+        : (
+          <div className="card stack" id="spend">
+            <div className="row between"><h2>{squad.started ? 'Spend credits' : 'Starting company'}</h2><span className="pill">{squad.credits} credits</span></div>
+            <button className="btn wide" onClick={() => setAdding(true)}>{squad.started ? '+ Buy unit' : '+ Add unit'}</button>
+            {squad.started
+              ? <BuyGear squad={squad} onBuy={buyGear} />
+              : <p className="muted small">Add units with their starting kit until you mark the squad as started. After that, new units and gear are bought here with credits.</p>}
+          </div>
+        ))}
+
+      {squad.started && (
+        <div className="card stack">
+          <h2>Armoury</h2>
+          <p className="muted small">Spare gear. Any regular can take it from their unit card for free.</p>
+          <div className="small">{armoury.length ? countItems(armoury).map(([g, n]) => (n > 1 ? `${g} ×${n}` : g)).join(', ') : 'Empty'}</div>
+        </div>
+      )}
 
       {mine && (
         <button className="btn danger ghost wide" onClick={async () => {
@@ -122,7 +186,7 @@ function Stat({ label, value }) {
   return <div className="stat"><div className="stat-value">{value}</div><div className="stat-label">{label}</div></div>;
 }
 
-function UnitCard({ unit, squad, mine, onChange, onRole, onEmpty, onRemove }) {
+function UnitCard({ unit, squad, mine, onChange, onRole, onEquip, onStash, onTake, onRemove }) {
   const [open, setOpen] = useState(false);
   const st = unitStats(unit, squad.faction);
   if (!st) return <div className="card warn">Unknown unit type: {unit.type}</div>;
@@ -142,10 +206,10 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEmpty, onRemove }) {
         <span>W <b>{st.wounds}</b></span>
         <span>CC <b>d{st.cc}</b></span>
         <span>S <b>d{st.s}</b></span>
-        <span>Eq <b>{st.eqSlots - unit.emptySlots}/{st.eqSlots}</b></span>
+        <span>Eq <b>{slotsUsed(unit.equipment)}/{st.eqSlots}</b></span>
         <span>EXP <b>{unit.exp}</b></span>
       </div>
-      {st.traits.length > 0 && <div className="small"><span className="muted">Traits: </span>{st.traits.join(', ')}</div>}
+      {!open && st.traits.length > 0 && <div className="small"><span className="muted">Traits: </span>{st.traits.join(', ')}</div>}
       {unit.pending?.length > 0 && (mine
         ? unit.pending.map((p, i) => (
           <TodoTask key={i + p} unit={unit} squad={squad} text={p} onDone={patch => onChange({
@@ -156,7 +220,8 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEmpty, onRemove }) {
 
       {open && (
         <div className="stack unit-body">
-          <div className="small"><span className="muted">Can equip: </span>{st.profile.equipment.join(', ') || 'none'}</div>
+          {st.traits.length > 0 && <TraitList names={st.traits} />}
+          <div className="small"><span className="muted">Equipped: </span>{unit.equipment?.length ? unit.equipment.join(', ') : 'nothing'}</div>
           {mine && <>
             <label>Name<input value={unit.name} onChange={e => onChange({ name: e.target.value })} /></label>
             <label>Model notes<input value={unit.model} placeholder="e.g. red pauldron" onChange={e => onChange({ model: e.target.value })} /></label>
@@ -167,11 +232,16 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEmpty, onRemove }) {
                 <option value="leader">Leader (hero)</option>
               </select>
             </label>
-            {!squad.started && (
-              <label>Empty equipment slots (1 credit back each)
-                <input type="number" min="0" max={st.eqSlots} value={unit.emptySlots}
-                  onChange={e => onEmpty(Math.max(0, Math.min(st.eqSlots, Number(e.target.value) || 0)))} />
-              </label>
+            {squad.started
+              ? <GearSwap unit={unit} st={st} armoury={squad.armoury ?? []} onStash={onStash} onTake={onTake} />
+              : (
+                <details>
+                  <summary className="small">Change equipment</summary>
+                  <EquipmentPicker allowed={allowedGear(unit, st)} slots={st.eqSlots} value={unit.equipment ?? []} onChange={onEquip} />
+                </details>
+              )}
+            {!squad.started && unit.emptySlots > 0 && (
+              <div className="muted small">{unit.emptySlots} empty slot{unit.emptySlots > 1 ? 's' : ''}: {unit.emptySlots} credit{unit.emptySlots > 1 ? 's' : ''} back.</div>
             )}
             <div className="counter">
               <span className="small">EXP (promotions taken: {unit.promotions ?? 0})</span>
@@ -198,27 +268,154 @@ function UnitCard({ unit, squad, mine, onChange, onRole, onEmpty, onRemove }) {
   );
 }
 
-function BuyUnit({ faction, credits, forceFull, onBuy, onCancel }) {
+function BuyUnit({ faction, factionId, started, credits, forceFull, onBuy, onCancel }) {
   const [type, setType] = useState(Object.keys(faction.reinforcements)[0]);
   const [name, setName] = useState('');
-  const cost = faction.reinforcements[type];
+  const [equipment, setEquipment] = useState([]);
+  const profile = findProfile(factionId, type);
+  const empty = started ? 0 : emptyBaseSlots(profile, equipment);
+  const cost = faction.reinforcements[type] - empty;
   const blocked = FORCE_UNITS.has(type) && forceFull;
 
   return (
-    <form className="card stack" onSubmit={e => { e.preventDefault(); onBuy(type, name.trim() || type); }}>
-      <h2>Add unit</h2>
+    <form className="card stack" onSubmit={e => { e.preventDefault(); onBuy(type, name.trim() || type, equipment); }}>
+      <h2>{started ? 'Buy unit' : 'Add unit'}</h2>
       <label>Unit
-        <select value={type} onChange={e => setType(e.target.value)}>
+        <select value={type} onChange={e => { setType(e.target.value); setEquipment([]); }}>
           {Object.entries(faction.reinforcements).map(([t, c]) => <option key={t} value={t}>{t} ({c} credits)</option>)}
         </select>
       </label>
       <label>Name<input value={name} placeholder={type} onChange={e => setName(e.target.value)} /></label>
-      <p className="muted small">Costs {cost} credits, leaving {credits - cost}.</p>
+      <div className="small">Starting equipment</div>
+      <EquipmentPicker allowed={profile.equipment} slots={profile.eq} value={equipment} onChange={setEquipment} />
+      <p className="muted small">
+        Costs {cost} credits{empty > 0 ? ` (${empty} back for empty slots)` : ''}, leaving {credits - cost}.
+        {started && slotsUsed(equipment) < profile.eq && ' Empty slots only refund credits in the starting company.'}
+      </p>
       {blocked && <p className="warn small">Your squad already has {MAX_FORCE_WIELDERS} force wielders.</p>}
       <div className="row gap">
-        <button className="btn" type="submit" disabled={blocked}>Add</button>
+        <button className="btn" type="submit" disabled={blocked || (started && cost > credits)}>{started ? `Buy for ${cost}` : 'Add'}</button>
         <button className="btn ghost" type="button" onClick={onCancel}>Cancel</button>
       </div>
     </form>
+  );
+}
+
+// Profile list, plus gear already held (e.g. Other Gear rolls) and a lightsaber once force sensitive.
+const allowedGear = (unit, st) => [...new Set([
+  ...st.profile.equipment,
+  ...(st.traits.includes('Force Sensitive') ? ['Lightsaber'] : []),
+  ...(unit.equipment ?? []),
+])];
+
+const countItems = items => [...items.reduce((m, g) => m.set(g, (m.get(g) ?? 0) + 1), new Map())];
+
+function GearSwap({ unit, st, armoury, onStash, onTake }) {
+  const equipment = unit.equipment ?? [];
+  const allowed = new Set(buyableGear(unit, st));
+  const takeable = isHero(unit) ? [] : [...new Set(armoury)].filter(g => allowed.has(g));
+  return (
+    <details>
+      <summary className="small">Change equipment</summary>
+      <div className="equip-picker">
+        <div className="muted small">Slots used {slotsUsed(equipment)}/{st.eqSlots}. Removed gear goes to the armoury.</div>
+        {equipment.map((g, i) => (
+          <div key={i + g} className="counter">
+            <span className="small">{g} <span className="muted">({slotsOf(g)})</span></span>
+            <button type="button" className="btn ghost small-btn" onClick={() => onStash(i)}>To armoury</button>
+          </div>
+        ))}
+        {takeable.map(g => (
+          <div key={'a' + g} className="counter">
+            <span className="small">{g} <span className="muted">({slotsOf(g)}, in armoury)</span></span>
+            <button type="button" className="btn small-btn" disabled={!fits(unit, st, g)} onClick={() => onTake(g)}>Equip</button>
+          </div>
+        ))}
+        {isHero(unit) && armoury.length > 0 && <div className="muted small">Heroes buy their gear rather than taking it from the armoury.</div>}
+      </div>
+    </details>
+  );
+}
+
+function BuyGear({ squad, onBuy }) {
+  const units = [...squad.units].filter(u => !isLost(u)).sort(byRankThenExp);
+  const [unitId, setUnitId] = useState('');
+  const [item, setItem] = useState('');
+  const unit = units.find(u => u.id === unitId);
+  const st = unit && unitStats(unit, squad.faction);
+  const options = st ? buyableGear(unit, st) : [];
+  const cost = unit && item ? gearCost(unit, item) : 0;
+  const tooBig = unit && item && !fits(unit, st, item);
+  const tooDear = cost > squad.credits;
+
+  return (
+    <div className="stack">
+      <label>Buy gear for
+        <select value={unitId} onChange={e => { setUnitId(e.target.value); setItem(''); }}>
+          <option value="">Choose a unit…</option>
+          {units.map(u => <option key={u.id} value={u.id}>{u.name} ({u.type})</option>)}
+        </select>
+      </label>
+      {unit && (
+        <label>Gear ({isHero(unit) ? 2 : 1} credit{isHero(unit) ? 's' : ''} per slot)
+          <select value={item} onChange={e => setItem(e.target.value)}>
+            <option value="">Choose gear…</option>
+            {options.map(g => <option key={g} value={g}>{g} ({gearCost(unit, g)} credits)</option>)}
+          </select>
+        </label>
+      )}
+      {unit && <div className="muted small">Slots used {slotsUsed(unit.equipment)}/{st.eqSlots}.</div>}
+      {tooBig && <div className="warn small">Not enough free slots. Move something to the armoury first.</div>}
+      {item && tooDear && <div className="warn small">Not enough credits.</div>}
+      {unit && (
+        <button className="btn" disabled={!item || tooBig || tooDear} onClick={() => { onBuy(unit, item); setItem(''); }}>
+          Buy{item ? ` ${item} for ${cost}` : ''}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TraitList({ names }) {
+  return (
+    <div className="trait-list unit-traits">
+      {names.map((n, i) => {
+        const tr = findTrait(n);
+        return (
+          <div key={n + i} className="trait">
+            <b className="small">{n}</b>
+            {tr?.text
+              ? <div className="small">{tr.text}</div>
+              : <div className="small muted">No description in your docs (see the Galactic Heroes rulebook).</div>}
+            {tr?.amended && <div className="amended small">{tr.amended}</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// One row per allowed item with a count, so doubles (e.g. two pistols) are possible.
+function EquipmentPicker({ allowed, slots, value, onChange }) {
+  const used = slotsUsed(value);
+  const count = item => value.filter(v => v === item).length;
+  const add = item => onChange([...value, item]);
+  const drop = item => { const i = value.lastIndexOf(item); onChange(value.filter((_, j) => j !== i)); };
+
+  return (
+    <div className="equip-picker">
+      <div className={`small ${used > slots ? 'warn' : 'muted'}`}>Slots used {used}/{slots}</div>
+      {allowed.map(item => (
+        <div key={item} className="counter">
+          <span className="small">{item} <span className="muted">({slotsOf(item)} slot{slotsOf(item) > 1 ? 's' : ''})</span></span>
+          <div className="row gap">
+            <button type="button" className="icon-btn step" aria-label={`Remove ${item}`} disabled={!count(item)} onClick={() => drop(item)}>−</button>
+            <b className="count">{count(item)}</b>
+            <button type="button" className="icon-btn step" aria-label={`Add ${item}`} disabled={used + slotsOf(item) > slots} onClick={() => add(item)}>+</button>
+          </div>
+        </div>
+      ))}
+      {allowed.length === 0 && <div className="muted small">This unit can't take equipment.</div>}
+    </div>
   );
 }
