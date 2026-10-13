@@ -157,11 +157,11 @@ function Squad() {
         ? <BuyUnit faction={faction} factionId={squad.faction} started={squad.started} credits={squad.credits} forceFull={forceUsers >= MAX_FORCE_WIELDERS} onBuy={buy} onCancel={() => setAdding(false)} />
         : (
           <div className="card stack" id="spend">
-            <div className="row between"><h2>Spend credits</h2><span className="pill">{squad.credits} credits</span></div>
-            <button className="btn wide" onClick={() => setAdding(true)}>+ Buy unit</button>
+            <div className="row between"><h2>{squad.started ? 'Spend credits' : 'Starting company'}</h2><span className="pill">{squad.credits} credits</span></div>
+            <button className="btn wide" onClick={() => setAdding(true)}>{squad.started ? '+ Buy unit' : '+ Add unit'}</button>
             {squad.started
               ? <BuyGear squad={squad} onBuy={buyGear} />
-              : <p className="muted small">In the starting company, kit comes with the unit: choose it when adding a unit or under its Change equipment.</p>}
+              : <p className="muted small">Add units with their starting kit until you mark the squad as started. After that, new units and gear are bought here with credits.</p>}
           </div>
         ))}
 
@@ -279,7 +279,7 @@ function BuyUnit({ faction, factionId, started, credits, forceFull, onBuy, onCan
 
   return (
     <form className="card stack" onSubmit={e => { e.preventDefault(); onBuy(type, name.trim() || type, equipment); }}>
-      <h2>Add unit</h2>
+      <h2>{started ? 'Buy unit' : 'Add unit'}</h2>
       <label>Unit
         <select value={type} onChange={e => { setType(e.target.value); setEquipment([]); }}>
           {Object.entries(faction.reinforcements).map(([t, c]) => <option key={t} value={t}>{t} ({c} credits)</option>)}
@@ -294,7 +294,7 @@ function BuyUnit({ faction, factionId, started, credits, forceFull, onBuy, onCan
       </p>
       {blocked && <p className="warn small">Your squad already has {MAX_FORCE_WIELDERS} force wielders.</p>}
       <div className="row gap">
-        <button className="btn" type="submit" disabled={blocked}>Add</button>
+        <button className="btn" type="submit" disabled={blocked || (started && cost > credits)}>{started ? `Buy for ${cost}` : 'Add'}</button>
         <button className="btn ghost" type="button" onClick={onCancel}>Cancel</button>
       </div>
     </form>
