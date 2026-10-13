@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { factions, forceUser, mercenaries } from '../data/factions.js';
 import { LIGHTSABER_FORMS, TRAIT_TABLES, findTrait } from '../data/traits.js';
 
@@ -37,7 +36,6 @@ export default function TraitsPage() {
 
   return (
     <div className="stack">
-      <Link to="/rules" className="small">← Rules</Link>
       <input type="search" placeholder="Search traits, e.g. shock" value={query} onChange={e => setQuery(e.target.value)} />
 
       {tables.filter(tb => tb.shown.length).map(tb => (
