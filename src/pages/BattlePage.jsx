@@ -79,7 +79,7 @@ function StartBattle({ squad }) {
         {mustRescue && <p className="warn small">A unit is M.I.A., so this mission must be a Rescue.</p>}
         <label>Scenario
           <select value={scenario} onChange={e => setScenario(e.target.value)}>
-            {SCENARIOS.map(s => <option key={s.name}>{s.name}</option>)}
+            {SCENARIOS.map(s => <option key={s.name} value={s.name}>{s.roll ? `${s.roll}. ` : ''}{s.name}</option>)}
           </select>
         </label>
         <label>Opponent<input value={opponent} placeholder="Who are you playing?" onChange={e => setOpponent(e.target.value)} /></label>
