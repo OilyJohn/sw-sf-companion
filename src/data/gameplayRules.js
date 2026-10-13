@@ -31,6 +31,7 @@ export const QUICK_REFERENCE = [
     'Shooter used first action to Aim +2',
   ] },
   { title: 'Close Combat', list: [
+    'Charging: +1',
     'Wounds/Shock: -1 for each Wound and Shock marker',
     'Outnumbered: -1 per attacker after first (-1 for facing 2 attackers, -2 for 3, etc.)',
     'Prone or no weapon: -1',
@@ -188,7 +189,7 @@ export const SECTIONS = [
         'Prone or no weapon: -1',
         'Close combat weapon: as the weapon says',
         'Defending a wall or defensive terrain: +1',
-        'Charging from outside the 1" zone (not if already in combat) +1 (GH only, not on your quick reference)',
+        'Charging +1 (from outside the 1" zone; not if already in combat)',
         'Mounted fighting someone on foot +1 (GH only, not on your quick reference)',
       ], ref: 'GH p.14' },
       { title: 'Rolling a 1: Fumble', text: 'As well as whatever the opponent does to you, you lose that weapon for the rest of the game. Picking it back up takes an action and cannot be done within 1" of an enemy.', ref: 'GH p.13' },
@@ -211,7 +212,6 @@ export const SECTIONS = [
       { title: 'When you are hit', text: 'Each hit from Shooting, Close Combat or falling: roll armour first (if the model has any), then roll on the Wound Table.', ref: 'GH pp. 15, 36' },
       { title: 'Regular Wound Table (D10)', table: [['2-', 'Nothing'], ['3-6', 'Shaken'], ['7+', 'Wounded'], ['Nat 10+', 'Wounded & Downed']], foot: '+1 to the roll for each wound the target has already sustained.', amended: 'GH: 0- nothing, 1-5 Shaken, 6-8 Wounded & Down, 9+ Out of Action.', ref: 'GH p.15' },
       { title: 'Stun Wound Table (D10)', table: [['2-', 'Nothing'], ['3-5', 'Shaken'], ['6-7', 'Shaken x2'], ['8+', 'Wounded'], ['Nat 10+', 'Wounded, Downed & Shaken']], foot: '+1 to the roll vs droids.', amended: 'New table, not in GH.' },
-      { title: 'Leader bonus', text: '+1 to the above rolls if within 12" and line of sight of a unit with the Leader trait.', amended: 'From the Amendments, where it sits under the Stun Wound Table. GH\'s Leader bonus is +1 to recovery rolls instead (see Recovery).' },
       { title: 'Shaken', list: [
         'Add a Shock marker.',
         'If shot while in cover it stays put; if in the open it immediately moves toward the nearest cover, never toward an enemy.',
@@ -278,7 +278,7 @@ export const SECTIONS = [
         'A Shaken model that wins a Close Combat removes all its Shock.',
         'Standing up does not remove Shock; that takes a separate recovery once standing.',
       ], ref: 'GH pp. 16-17' },
-      { title: 'Leader', text: 'GH gives +1 to recover from Shock or stand up when within 12" and line of sight of the Leader. A natural 1 still fails.', amended: 'Your Amendments list a Leader +1 under the Stun Wound Table instead (see Wounding).', ref: 'GH p.21' },
+      { title: 'Leader', text: '+1 to Shock and Downed recovery rolls if within 12" and line of sight of a unit with the Leader trait. A natural 1 still fails.', ref: 'GH p.21' },
       { title: 'Retreat', text: [
         'At the start of its activation, if a unit has more Shock tokens than remaining wounds, it takes a Task roll based on the excess:',
       ], table: [['Exceeds by 1', 'Easy (3+)'], ['Exceeds by 2', 'Medium (5+)'], ['Exceeds by 3', 'Hard (8+)']], foot: 'Pass: activate as normal. Fail: Run Away (2 full moves directly away from whatever last shocked it), then its activation ends.', amended: 'GH: retreat 2 moves automatically, then remove Shock down to remaining wounds; routs if it has nowhere to go.', ref: 'GH p.18' },
