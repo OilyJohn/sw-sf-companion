@@ -13,6 +13,7 @@
   --on-accent: #000;   /* text on accent-filled buttons */
   --strong: #fff;
   --glow: none;        /* text-shadow for headings/accent text */
+  --bar-glow: none;    /* box-shadow under the top bar / beside the sidebar */
   --sidebar-w: 260px;
   --cut: 12px; /* size of the angled corners */
   color-scheme: dark;
@@ -54,6 +55,7 @@ strong, b { font-weight: 500; color: var(--strong); }
   --on-accent: #021433;
   --strong: #eafaff;
   --glow: 0 0 6px rgb(127 220 255 / .55);
+  --bar-glow: 0 0 14px rgb(127 220 255 / .33);
 }
 :root[data-theme="hologram"] body {
   background:
@@ -63,8 +65,28 @@ strong, b { font-weight: 500; color: var(--strong); }
 }
 h1, h2, .brand, .stat-value, .battle-code, .icon-btn, a, details summary, strong, b { text-shadow: var(--glow); }
 .btn, .sidebar a.active { text-shadow: none; }
-:root[data-theme="hologram"] .topbar { box-shadow: 0 2px 14px rgb(127 220 255 / .35); }
-:root[data-theme="hologram"] .sidebar { box-shadow: 2px 0 14px rgb(127 220 255 / .3); }
+.topbar, .nav-open .sidebar { box-shadow: var(--bar-glow); }
+
+/* Lightsaber themes: starry black with text and lines in a glowing blade colour. */
+:root[data-theme^="saber-"] {
+  --panel: #0b0b0d;
+  --panel-2: #16161a;
+  --muted: #9a9aa3;
+  --hero: #ffffff;
+  --on-accent: #000;
+  --strong: #fff;
+  --glow: 0 0 4px var(--blade), 0 0 10px var(--blade);
+  --bar-glow: 0 0 14px var(--blade);
+  --accent: var(--core);
+}
+:root[data-theme="saber-red"]    { --blade: #ff2a2a; --core: #ff8080; --text: #ffe3e3; --accent-dim: #7a1515; --border: #5c1a1a; --danger: #ffa13c; }
+:root[data-theme="saber-blue"]   { --blade: #2a7bff; --core: #8cc0ff; --text: #e3eeff; --accent-dim: #1a3f7a; --border: #1d3560; }
+:root[data-theme="saber-green"]  { --blade: #2aff4a; --core: #96ff9f; --text: #e3ffe6; --accent-dim: #1a6b25; --border: #1d5224; }
+:root[data-theme="saber-purple"] { --blade: #b52aff; --core: #d79bff; --text: #f3e3ff; --accent-dim: #5a1a7a; --border: #44205c; }
+
+/* Starry sky behind the yellow and lightsaber themes (panels stay solid so text reads cleanly). */
+:root:not([data-theme]), :root[data-theme^="saber-"] { background: url(/stars.svg) var(--bg); background-attachment: fixed; }
+:root:not([data-theme]) body, :root[data-theme^="saber-"] body { background: transparent; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 
 .topbar {

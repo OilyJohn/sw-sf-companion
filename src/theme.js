@@ -2,6 +2,10 @@
 export const THEMES = [
   { id: 'default', label: 'Classic Yellow', bar: '#050505' },
   { id: 'hologram', label: 'Hologram', bar: '#010816' },
+  { id: 'saber-red', label: 'Lightsaber: Red', bar: '#000000' },
+  { id: 'saber-blue', label: 'Lightsaber: Blue', bar: '#000000' },
+  { id: 'saber-green', label: 'Lightsaber: Green', bar: '#000000' },
+  { id: 'saber-purple', label: 'Lightsaber: Purple', bar: '#000000' },
 ];
 const KEY = 'sf-theme';
 
