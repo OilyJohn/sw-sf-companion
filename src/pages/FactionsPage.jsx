@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { factions, forceUser, mercenaries } from '../data/factions.js';
+import RuleLinks from '../components/RuleLinks.jsx';
 
 const ALL = [...factions, forceUser, mercenaries];
 
@@ -86,8 +87,8 @@ export default function FactionsPage() {
             <div className="statline">
               <span>W <b>{u.w}</b></span><span>CC <b>d{u.cc}</b></span><span>S <b>d{u.s}</b></span><span>Eq <b>{u.eq}</b></span>
             </div>
-            {u.traits.length > 0 && <div className="small"><span className="muted">Traits: </span>{u.traits.join(', ')}</div>}
-            <div className="small"><span className="muted">Equipment: </span>{u.equipment.join(', ') || 'none'}</div>
+            {u.traits.length > 0 && <RuleLinks label="Traits" kind="trait" names={u.traits} />}
+            <RuleLinks label="Equipment" kind="gear" names={u.equipment} />
           </div>
         ))}
       </div>

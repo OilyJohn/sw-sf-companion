@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
+import ForcePowers from '../components/ForcePowers.jsx';
 import RollInput from '../components/RollInput.jsx';
+import RuleLinks from '../components/RuleLinks.jsx';
 import SignInGate from '../components/SignInGate.jsx';
 import { WotfPanel, WotfPicker, mercsChosen } from '../components/WillOfTheForce.jsx';
 import { createBattle, normaliseCode, useMyBattles } from '../battles.js';
@@ -233,6 +235,7 @@ export function Tracker({ squad, shared = false }) {
       {units.map(u => {
         const t = battle.units[u.id];
         const hero = u.role !== 'regular';
+        const st = unitStats(u, squad.faction);
         return (
           <div key={u.id} className={`card ${t.ooa ? 'dim' : ''}`}>
             <div className="row between">
@@ -240,12 +243,17 @@ export function Tracker({ squad, shared = false }) {
                 <strong>{u.name}</strong>
                 {hero && <span className={`tag ${u.role}`}>{u.role}</span>}
                 {u.temp && <span className="tag">Mercenary</span>}
-                <div className="muted small">{u.type} · W {unitStats(u, squad.faction)?.wounds}</div>
+                <div className="muted small">{u.type} · W {st?.wounds} · CC d{st?.cc} · S d{st?.s}</div>
               </div>
               <button className={`btn small-btn ${t.ooa ? '' : 'ghost'}`} onClick={() => update(u.id, { ooa: !t.ooa })}>
                 {t.ooa ? 'Out of action' : 'In action'}
               </button>
             </div>
+            {st && <>
+              <RuleLinks label="Traits" kind="trait" names={st.traits} />
+              <RuleLinks label="Gear" kind="gear" names={u.equipment ?? []} />
+              <ForcePowers unit={u} traits={st.traits} />
+            </>}
             <Counter label="Wounds inflicted" value={t.wounds} onChange={v => update(u.id, { wounds: v })} />
             <Counter label="Enemy heroes defeated" value={t.heroKills} onChange={v => update(u.id, { heroKills: v })} />
             <Counter label="Objective EXP" value={t.objective} onChange={v => update(u.id, { objective: v })} />

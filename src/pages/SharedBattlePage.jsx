@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
+import ForcePowers from '../components/ForcePowers.jsx';
 import RollInput from '../components/RollInput.jsx';
+import RuleLinks from '../components/RuleLinks.jsx';
 import SignInGate from '../components/SignInGate.jsx';
 import { WotfPicker } from '../components/WillOfTheForce.jsx';
 import {
@@ -82,6 +84,7 @@ function SharedBattle() {
   return (
     <div className="stack">
       <BattlePanel battle={battle} teams={teams} squads={squads} uid={user.uid} />
+      <OtherSquads battle={battle} squads={squads} uid={user.uid} />
       {mySquad?.battle?.battleId === battle.id ? <Tracker squad={mySquad} shared /> : <p className="muted small">Setting up your squad…</p>}
       <button className="btn ghost danger wide" onClick={() => confirm('Abandon this battle for everyone without recording it?') && abandonBattle(battle.id).catch(fail)}>
         Abandon battle
@@ -292,6 +295,52 @@ function MySquadPicker({ battle, uid }) {
 }
 
 // --- During the battle ---
+
+// Every other player's units in this battle, with their traits and gear, to check what you're facing.
+function OtherSquads({ battle, squads, uid }) {
+  const me = battle.players[uid];
+  const others = Object.entries(battle.players).filter(([k]) => k !== uid)
+    .sort(([, a], [, b]) => (a.team === me.team) - (b.team === me.team));
+  const teamName = id => battle.teams.find(t => t.id === id)?.name ?? '';
+  return others.map(([k, p]) => {
+    const squad = squads[p.squadId];
+    const tracked = squad?.battle?.battleId === battle.id ? squad.battle.units : {};
+    const units = (p.units ?? []).map(id => squad?.units.find(u => u.id === id)).filter(Boolean);
+    return (
+      <details key={k} className="card">
+        <summary className="section-head">
+          <div>
+            <h2>{p.squadName}</h2>
+            <div className="muted small">{p.name} · {teamName(p.team)}{p.team === me.team ? ' (your team)' : ''}</div>
+          </div>
+          <span className="pill">{units.filter(u => !tracked[u.id]?.ooa).length}/{units.length} in action</span>
+        </summary>
+        {!squad && <p className="muted small">Loading squad…</p>}
+        {units.map(u => {
+          const st = unitStats(u, squad.faction);
+          return (
+            <div key={u.id} className={`sub ${tracked[u.id]?.ooa ? 'dim' : ''}`}>
+              <div className="row between">
+                <div>
+                  <strong>{u.name}</strong>
+                  {u.role !== 'regular' && <span className={`tag ${u.role}`}>{u.role}</span>}
+                  {u.temp && <span className="tag">Mercenary</span>}
+                  <div className="muted small">{u.type}{st ? ` · W ${st.wounds} · CC d${st.cc} · S d${st.s}` : ''}</div>
+                </div>
+                {tracked[u.id]?.ooa && <span className="pill">Out of action</span>}
+              </div>
+              {st && <>
+                <RuleLinks label="Traits" kind="trait" names={st.traits} />
+                <RuleLinks label="Gear" kind="gear" names={u.equipment ?? []} />
+                <ForcePowers unit={u} traits={st.traits} />
+              </>}
+            </div>
+          );
+        })}
+      </details>
+    );
+  });
+}
 
 function BattlePanel({ battle, teams, squads, uid }) {
   const [calling, setCalling] = useState(false);

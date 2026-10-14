@@ -170,3 +170,17 @@ details summary { cursor: pointer; color: var(--accent); padding: 6px 0; }
 .unit-card { scroll-margin-top: 72px; transition: border-color .3s; }
 .unit-card.flash { --edge: var(--accent); border-color: var(--accent); }
 .btn.big { padding: 18px 16px; font-size: 1.1rem; }
+
+/* Tappable trait and gear names that open their rule */
+.rule-link { background: none; border: 0; padding: 0; font: inherit; color: var(--text); text-decoration: underline dotted var(--accent); text-underline-offset: 3px; cursor: pointer; }
+.force-card summary { padding: 4px 0; font-size: .85rem; }
+summary.section-head::-webkit-details-marker { display: none; }
+
+/* Win/Loss Records */
+.record-table { display: grid; grid-template-columns: 1fr repeat(4, 2.5ch); gap: 8px 12px; align-items: center; }
+.record-table > :not(:nth-child(5n + 1)) { text-align: center; }
+.record-table a { color: var(--text); }
+
+/* Search All Rules: first paragraph clamped until opened */
+.search-body { margin-top: 6px; }
+.search-body .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

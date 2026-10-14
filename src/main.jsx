@@ -17,3 +17,17 @@ createRoot(document.getElementById('root')).render(
     </HashRouter>
   </StrictMode>
 );
+
+// Offline support (see public/sw.js). Only in the built app, so local dev always runs fresh code.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`);
+      const reg = await navigator.serviceWorker.ready;
+      const urls = [location.href.split('#')[0], ...performance.getEntriesByType('resource').map(r => r.name)];
+      reg.active?.postMessage({ type: 'cache', urls });
+    } catch (e) {
+      console.warn('Offline support unavailable', e);
+    }
+  });
+}
