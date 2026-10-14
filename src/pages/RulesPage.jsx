@@ -21,8 +21,8 @@ function RuleItem({ it }) {
       )}
       {it.foot && <div className="small muted"><i>{it.foot}</i></div>}
       {typeof it.amended === 'string' && <div className="amended small">{it.amended}</div>}
-      {it.gh && <div className="gh-old">Old GH rule: {it.gh}</div>}
       {it.ref && <div className="muted small">{it.ref}</div>}
+      {it.gh && <div className="gh-old">Old GH rule: {it.gh}</div>}
     </div>
   );
 }
