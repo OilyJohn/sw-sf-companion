@@ -22,7 +22,7 @@ const propertiesIn = text => PROPERTIES.filter(p =>
 
 const ptsLabel = pts => (pts > 0 ? `+${pts} pts` : `${pts} pts`);
 
-// { title, sub, lines: [{ label?, text, amended? }] } for the rule popup, or null if unknown.
+// { title, sub, lines: [{ label?, text, amended?, old? }] } for the rule popup, or null if unknown.
 export function traitRule(name) {
   const tr = findTrait(name);
   if (!tr) return { title: name, sub: 'Trait', lines: [{ text: 'No description in your docs yet (it may be in the Galactic Heroes rulebook).' }] };
@@ -47,6 +47,7 @@ export function gearRule(name) {
   for (const p of propertiesIn(it.notes)) {
     lines.push({ label: p.name, text: p.text });
     if (p.amended) lines.push({ text: p.amended, amended: true });
+    if (p.gh) lines.push({ text: `Old GH rule: ${p.gh}`, old: true });
   }
   const shownAs = norm(it.name) === norm(name) ? '' : ` (${it.name})`;
   return { title: name + shownAs, sub: `${it.group} · ${slots}`, lines };

@@ -36,7 +36,7 @@ export function RulePopup({ rule, onClose }) {
           {rule.sub && <div className="muted small">{rule.sub}</div>}
         </div>
         {rule.lines.map((l, i) => (
-          <div key={i} className={l.amended ? 'amended small' : l.muted ? 'muted small' : 'small'}>
+          <div key={i} className={l.old ? 'gh-old' : l.amended ? 'amended small' : l.muted ? 'muted small' : 'small'}>
             {l.label && <b>{l.label}: </b>}{l.text}
           </div>
         ))}
