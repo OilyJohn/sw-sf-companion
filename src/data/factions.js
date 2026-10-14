@@ -141,11 +141,11 @@ export const factions = [
     // at its points value (as every other faction does), pending Alex's confirmation.
     reinforcements: { 'Nightsister Zombie': 7, 'Nightsister Warrior': 12, 'Nightsister Archer': 11, 'Nightsister Witch': 17, 'Jedi/Sith': 19 },
     aliases: { 'Green Fireball': 'Thermal Detonator', 'Magick Lightning': 'Force Lightning' },
-    // Acrobat/Assassin W and Ranger/Hunter Eq are blank in the PDF; filled in to match their points.
+    // Ranger/Hunter Eq are blank in the PDF; filled in to match their points.
     units: [
       u(7, 'Nightsister Zombie', 1, 8, 8, ['Soulless', 'Pugilist'], [], 0, ['Undead Dasher']),
-      u(12, 'Undead Dasher', 1, 10, 8, ['Soulless', 'Pugilist', 'Quick', 'Survivor'], [], 0, ['Reanimated Lunatic']),
-      u(17, 'Reanimated Lunatic', 1, 10, 8, ['Soulless', 'Pugilist', 'Quick', 'Survivor', 'Bloodthirsty', 'Armoured'], [], 0),
+      u(13, 'Undead Dasher', 1, 10, 8, ['Soulless', 'Pugilist', 'Quick', 'Survivor'], [], 0, ['Reanimated Lunatic']),
+      u(18, 'Reanimated Lunatic', 1, 10, 8, ['Soulless', 'Pugilist', 'Quick', 'Survivor', 'Bloodthirsty', 'Armoured'], [], 0),
       u(12, 'Nightsister Warrior', 1, 10, 8, ['Fancy Footwork'], NS_WARRIOR, 2, ['Nightsister Acrobat']),
       u(17, 'Nightsister Acrobat', 1, 10, 8, ['Fancy Footwork', 'Acrobatic', 'Dodge'], [...NS_WARRIOR, 'Heavy Armour'], 3, ['Nightsister Assassin']),
       u(24, 'Nightsister Assassin', 1, 12, 8, ['Fancy Footwork', 'Acrobatic', 'Dodge', 'Weapon Master'], [...NS_WARRIOR, 'Heavy Armour'], 4),
