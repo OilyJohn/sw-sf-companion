@@ -8,7 +8,7 @@ import RuleLinks from '../components/RuleLinks.jsx';
 import TodoTask from '../components/TodoTask.jsx';
 import { MAX_FORCE_WIELDERS, MAX_HEROES } from '../data/factions.js';
 import { GEAR_COST_PER_SLOT, slotsOf, slotsUsed } from '../data/equipment.js';
-import { FORCE_UNITS, ROLE_BONUS, findProfile, getFaction } from '../data/rules.js';
+import { FORCE_WIELDERS, ROLE_BONUS, findProfile, getFaction } from '../data/rules.js';
 import { findTrait } from '../data/traits.js';
 import { buyableGear } from '../gear.js';
 import { deleteSquad, newUnit, saveSquad, squadPoints, unitStats, useSquad } from '../squads.js';
@@ -47,7 +47,7 @@ function Squad() {
   const mine = squad.ownerId === user.uid;
   const active = squad.units.filter(u => !isLost(u));
   const heroes = active.filter(isHero).length;
-  const forceUsers = active.filter(u => FORCE_UNITS.has(u.type)).length;
+  const forceUsers = active.filter(u => FORCE_WIELDERS.has(u.type)).length;
   const hasLeader = active.some(isLeader);
 
   const armoury = squad.armoury ?? [];
@@ -298,7 +298,7 @@ function BuyUnit({ faction, factionId, started, role, credits, forceFull, onBuy,
   const slots = profile.eq + (ROLE_BONUS[role]?.eqSlots ?? 0);
   const empty = started ? 0 : emptyBaseSlots(profile, equipment);
   const cost = faction.reinforcements[type] - empty;
-  const blocked = FORCE_UNITS.has(type) && forceFull;
+  const blocked = FORCE_WIELDERS.has(type) && forceFull;
 
   return (
     <form className="card stack" onSubmit={e => { e.preventDefault(); onBuy(type, name.trim() || type, equipment, role); }}>

@@ -144,7 +144,7 @@ export const TRAIT_TABLES = [
       t('5', 'TK Grab', 3, 'Make a task roll to be able to pick up something within 12", and move it up to 5" in any direction. Medium (5+) for objects, Hard (8+) for other units. If lifted in the air, the object drops to the ground at the end of this unit’s activation.'),
       t('6 (DS)', 'Choke', 2, 'Ranged attack with a range of 6/12".'),
       t('6 (LS)', 'Heal', 3, 'If in contact with a friendly, spend 1 action to remove 1 wound or all shock tokens on that unit.'),
-      t('7', 'Lightning/Force Justice', 3, 'Acts like a ranged weapon with range 9/18" and Splash.'),
+      t('7', 'Lightning/Force Justice', 3, 'Acts like a ranged weapon with range 9/18" and Splash.', { aliases: ['Force Lightning', 'Magick Lightning'] }),
       t('8', 'Lightsaber Throw', 2, 'As an action, make a Hard (8+) task roll to throw your lightsaber at a target within 12". On a 1, your lightsaber is dropped on the floor halfway between you and your target.'),
       t('9', 'Dominate', 3, 'For 2 actions, make a Medium (5+) task roll to take control of a non-hero, non-force wielder enemy unit, and take 2 actions with them. This does not affect that unit’s turn; they can still be activated as normal later in the turn if they have not already activated this turn.'),
       t('10', 'Mind Trick', 2, 'When charged by an enemy, you may choose to make a Hard (8+) task roll. On success the enemy gets to just outside your control zone and their activation ends.'),
