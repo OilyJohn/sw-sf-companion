@@ -34,7 +34,10 @@ export const formLevel = (unit, form) => unit.forms?.[form.name] ?? 0;
 export const LEVELS = ['I', 'II', 'III'];
 export { LIGHTSABER_FORMS };
 
+export const REGEAR_TODO = 'Regear for free: promotion changed what this unit can carry';
+
 const TODOS = {
+  [REGEAR_TODO]: { kind: 'regear' },
   [ROLE_BONUS.leader.pending]: { kind: 'trait', tables: ['general', 'shooting', 'cc'] },
   [ROLE_BONUS.officer.pending]: { kind: 'trait', tables: ['general'] },
   'Roll on the Negative Trait table': { kind: 'trait', tables: ['negative'] },

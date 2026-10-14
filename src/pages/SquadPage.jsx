@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import SignInGate from '../components/SignInGate.jsx';
+import EquipmentPicker from '../components/EquipmentPicker.jsx';
 import TodoTask from '../components/TodoTask.jsx';
 import { MAX_FORCE_WIELDERS, MAX_HEROES } from '../data/factions.js';
-import { EQUIPMENT_SLOTS, GEAR_COST_PER_SLOT, SPECIALIST, slotsOf, slotsUsed } from '../data/equipment.js';
+import { GEAR_COST_PER_SLOT, slotsOf, slotsUsed } from '../data/equipment.js';
 import { FORCE_UNITS, ROLE_BONUS, findProfile, getFaction } from '../data/rules.js';
 import { findTrait } from '../data/traits.js';
+import { buyableGear } from '../gear.js';
 import { deleteSquad, newUnit, saveSquad, squadPoints, unitStats, useSquad } from '../squads.js';
 
 export default function SquadPage() {
@@ -29,14 +31,6 @@ const removeOne = (items, item) => without(items, items.indexOf(item));
 const fits = (unit, st, item) => slotsUsed(unit.equipment) + slotsOf(item) <= st.eqSlots;
 const gearCost = (unit, item) => slotsOf(item) * GEAR_COST_PER_SLOT[isHero(unit) ? 'hero' : 'regular'];
 
-// Regulars use their profile's gear (plus a lightsaber once force sensitive). Heroes can buy any
-// gear except specialist weapons, unless they're a Weapons Specialist.
-function buyableGear(unit, st) {
-  if (!isHero(unit)) return [...st.profile.equipment, ...(st.traits.includes('Force Sensitive') ? ['Lightsaber'] : [])];
-  const specialist = st.traits.includes('Weapons Specialist');
-  return Object.keys(EQUIPMENT_SLOTS).filter(g => specialist || !SPECIALIST.has(g)).sort();
-}
-
 function Squad() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -56,8 +50,8 @@ function Squad() {
 
   const armoury = squad.armoury ?? [];
   const save = patch => saveSquad(squad.id, patch);
-  const updateUnit = (unitId, patch) =>
-    save({ units: squad.units.map(u => (u.id === unitId ? { ...u, ...patch } : u)) });
+  const updateUnit = (unitId, patch, extra = {}) =>
+    save({ units: squad.units.map(u => (u.id === unitId ? { ...u, ...patch } : u)), ...extra });
 
   // In the starting phase, changing equipment re-works the empty-slot refund.
   function setEquipment(unit, equipment) {
@@ -152,7 +146,7 @@ function Squad() {
       <div className="stack">
         {[...squad.units].sort(byRankThenExp).map(unit => (
           <UnitCard key={unit.id} unit={unit} squad={squad} mine={mine}
-            onChange={patch => updateUnit(unit.id, patch)}
+            onChange={(patch, extra) => updateUnit(unit.id, patch, extra)}
             onRole={role => setRole(unit, role)}
             canSucceed={squad.started && !hasLeader && unit.role === 'officer' && !isLost(unit)}
             onSucceed={() => updateUnit(unit.id, { traits: [...unit.traits, { name: 'Leader', pts: 0 }] })}
@@ -229,9 +223,9 @@ function UnitCard({ unit, squad, mine, onChange, onRole, canSucceed, onSucceed, 
       {!open && st.traits.length > 0 && <div className="small"><span className="muted">Traits: </span>{st.traits.join(', ')}</div>}
       {unit.pending?.length > 0 && (mine
         ? unit.pending.map((p, i) => (
-          <TodoTask key={i + p} unit={unit} squad={squad} text={p} onDone={patch => onChange({
+          <TodoTask key={i + p} unit={unit} squad={squad} text={p} onDone={(patch, extra) => onChange({
             ...patch, pending: [...unit.pending.filter((_, j) => j !== i), ...(patch.pending ?? [])],
-          })} />
+          }, extra)} />
         ))
         : unit.pending.map(p => <div key={p} className="warn small">To do: {p}</div>))}
 
@@ -423,31 +417,6 @@ function TraitList({ names }) {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-// One row per allowed item with a count, so doubles (e.g. two pistols) are possible.
-function EquipmentPicker({ allowed, slots, value, onChange }) {
-  const used = slotsUsed(value);
-  const count = item => value.filter(v => v === item).length;
-  const add = item => onChange([...value, item]);
-  const drop = item => { const i = value.lastIndexOf(item); onChange(value.filter((_, j) => j !== i)); };
-
-  return (
-    <div className="equip-picker">
-      <div className={`small ${used > slots ? 'warn' : 'muted'}`}>Slots used {used}/{slots}</div>
-      {allowed.map(item => (
-        <div key={item} className="counter">
-          <span className="small">{item} <span className="muted">({slotsOf(item)} slot{slotsOf(item) > 1 ? 's' : ''})</span></span>
-          <div className="row gap">
-            <button type="button" className="icon-btn step" aria-label={`Remove ${item}`} disabled={!count(item)} onClick={() => drop(item)}>−</button>
-            <b className="count">{count(item)}</b>
-            <button type="button" className="icon-btn step" aria-label={`Add ${item}`} disabled={used + slotsOf(item) > slots} onClick={() => add(item)}>+</button>
-          </div>
-        </div>
-      ))}
-      {allowed.length === 0 && <div className="muted small">This unit can't take equipment.</div>}
     </div>
   );
 }

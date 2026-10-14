@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import EquipmentPicker from './EquipmentPicker.jsx';
 import ExpShift from './ExpShift.jsx';
 import ResultPopup from './ResultPopup.jsx';
 import RollInput from './RollInput.jsx';
@@ -6,14 +7,16 @@ import { findTrait } from '../data/traits.js';
 import {
   LEVELS, LIGHTSABER_FORMS, choosable, diceRange, formLevel, parseFormTrait, rollTraitTable, todoSpec, traitTable,
 } from '../data/todos.js';
+import { buyableGear, gearProblems, removedGear } from '../gear.js';
 import { maxShift, promotionOptions } from '../promotions.js';
 import { unitStats } from '../squads.js';
 
 // One Back to the Ship to-do: roll or choose the result and apply it to the unit.
-// onDone(patch) saves the unit patch and clears the to-do; patch.pending lists any new to-dos.
+// onDone(patch, extra) saves the unit patch (and any squad-level `extra`) and clears the to-do;
+// patch.pending lists any new to-dos.
 export default function TodoTask({ unit, squad, text, onDone }) {
   const spec = todoSpec(text);
-  const Body = { trait: TraitTask, gear: GearTask, removeNegative: RemoveNegativeTask, form: FormTask, promotion: PromotionTask }[spec.kind] ?? OtherTask;
+  const Body = { trait: TraitTask, gear: GearTask, removeNegative: RemoveNegativeTask, form: FormTask, promotion: PromotionTask, regear: RegearTask }[spec.kind] ?? OtherTask;
   return (
     <div className="sub">
       <div><b>{unit.name}</b>: {text}</div>
@@ -210,6 +213,30 @@ function OtherTask({ unit, onDone }) {
       <button className="btn" onClick={() => onDone(name.trim() ? addTraits(unit, { name: name.trim(), pts: Number(pts) || 0 }) : {})}>
         {name.trim() ? `Add ${name.trim()}` : 'Mark done'}
       </button>
+    </div>
+  );
+}
+
+// After a promotion: swap gear for anything the new unit type can carry, at no cost.
+// Gear taken off goes to the squad's armoury, as it does on the squad page.
+function RegearTask({ unit, squad, onDone }) {
+  const st = unitStats(unit, squad.faction);
+  const allowed = buyableGear(unit, st);
+  const equipment = unit.equipment ?? [];
+  const [value, setValue] = useState(() => equipment.filter(g => allowed.includes(g)));
+  const { notAllowed, overSlots } = gearProblems(unit, st);
+  const tooMany = gearProblems({ ...unit, equipment: value }, st).overSlots;
+
+  return (
+    <div className="stack">
+      {notAllowed.length > 0 && <div className="warn small">A {unit.type} can't carry: {notAllowed.join(', ')}.</div>}
+      {overSlots && <div className="warn small">Their gear needs more slots than a {unit.type} has ({st.eqSlots}).</div>}
+      {notAllowed.length === 0 && !overSlots && <div className="muted small">{unit.name} can carry everything they have now. Change it anyway if you like.</div>}
+      <EquipmentPicker allowed={allowed} slots={st.eqSlots} value={value} onChange={setValue} />
+      <div className="muted small">Free of charge. Anything taken off goes to the armoury.</div>
+      <button className="btn" disabled={tooMany} onClick={() => onDone({ equipment: value }, {
+        armoury: [...(squad.armoury ?? []), ...removedGear(equipment, value)],
+      })}>Save gear</button>
     </div>
   );
 }

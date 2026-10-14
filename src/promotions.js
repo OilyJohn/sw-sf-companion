@@ -1,6 +1,8 @@
 import { EXP_PER_PROMOTION } from './data/campaign.js';
 import { MAX_HEROES } from './data/factions.js';
 import { ROLE_BONUS } from './data/rules.js';
+import { REGEAR_TODO } from './data/todos.js';
+import { needsRegear } from './gear.js';
 import { unitStats } from './squads.js';
 
 const isHero = u => u.role !== 'regular';
@@ -22,7 +24,12 @@ export function promotionOptions(res, unit, squad, pending = unit.pending ?? [])
   }
   if (e.promote) {
     return st.profile.promotesTo.length
-      ? st.profile.promotesTo.map(t => [`Promote to ${t}`, { type: t }])
+      ? st.profile.promotesTo.map(t => {
+        // A new unit type can carry different gear, so check it still fits.
+        const promoted = { ...unit, type: t };
+        const regear = needsRegear(promoted, unitStats(promoted, squad.faction));
+        return [`Promote to ${t}`, regear ? { type: t, pending: [...pending, REGEAR_TODO] } : { type: t }];
+      })
       : [['Not eligible: take nothing', {}]];
   }
   if (e.hero) {

@@ -84,10 +84,10 @@ function Ship() {
         {todos.length === 0 && <p className="muted small">Nothing outstanding.</p>}
         {todos.map(u => u.pending.map((p, i) => (
           <TodoTask key={u.id + i + p} unit={u} squad={squad} text={p}
-            onDone={patch => {
+            onDone={(patch, extra) => {
               // Drop this to-do; a result can also add new ones (patch.pending holds only the new ones).
               const rest = u.pending.filter((_, j) => j !== i);
-              updateUnit(u.id, { ...patch, pending: [...rest, ...(patch.pending ?? [])] });
+              updateUnit(u.id, { ...patch, pending: [...rest, ...(patch.pending ?? [])] }, extra);
             }} />
         )))}
       </Section>
