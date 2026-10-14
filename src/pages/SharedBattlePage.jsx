@@ -12,7 +12,7 @@ import {
 import { RESULTS, SCENARIOS } from '../data/campaign.js';
 import { rulesFor } from '../data/scenarioRules.js';
 import { blankWotf } from '../data/willOfTheForce.js';
-import { saveSquad, squadPoints, tempMerc, unitStats, unitsPoints, useMySquads, useSquadsById, withoutTemp } from '../squads.js';
+import { saveSquad, squadPoints, tempMerc, todoCount, unitStats, unitsPoints, useMySquads, useSquadsById, withoutTemp } from '../squads.js';
 import { blankTrack, Counter, EndBattle, Tracker } from './BattlePage.jsx';
 
 export default function SharedBattlePage() {
@@ -62,7 +62,7 @@ function SharedBattle() {
       </div>
     );
   }
-  if (battle.status === 'lobby') return <Lobby battle={battle} uid={user.uid} />;
+  if (battle.status === 'lobby') return <Lobby battle={battle} uid={user.uid} mySquad={mySquad} />;
 
   const teams = teamStates(battle, squads);
   if (battle.status === 'ended') {
@@ -101,8 +101,9 @@ function NotFound({ text }) {
 
 // --- Lobby ---
 
-function Lobby({ battle, uid }) {
+function Lobby({ battle, uid, mySquad }) {
   const me = battle.players[uid];
+  const todos = mySquad ? todoCount(mySquad) : 0;
   const scenario = agreedScenario(battle);
   const problems = startProblems(battle);
   const players = Object.entries(battle.players);
@@ -186,7 +187,12 @@ function Lobby({ battle, uid }) {
           {problems.map(p => <div key={p} className="muted small">{p}</div>)}
         </div>
       )}
-      <button className={`btn wide ${me.ready ? 'ghost' : ''}`} disabled={!me.ready && (!me.squadId || !me.units.length)}
+      {todos > 0 && (
+        <div className="warn small">
+          {mySquad.name} has {todos} to-do{todos > 1 ? 's' : ''} to finish first. <Link to={`/squads/${mySquad.id}`}>Go to the squad page</Link>
+        </div>
+      )}
+      <button className={`btn wide ${me.ready ? 'ghost' : ''}`} disabled={!me.ready && (!me.squadId || !me.units.length || todos > 0)}
         onClick={() => setReady(battle.id, uid, !me.ready).catch(fail)}>
         {me.ready ? 'Not ready' : 'Ready'}
       </button>
@@ -238,8 +244,9 @@ function MySquadPicker({ battle, uid }) {
   const squads = useMySquads(uid);
   if (squads === null) return <p className="muted">Loading squads…</p>;
   const squad = squads.find(s => s.id === me.squadId);
-  // A squad already fighting or still back on the ship can't join.
+  // A squad already fighting, still back on the ship, or with to-dos left can't join.
   const free = squads.filter(s => s.id === me.squadId || (!s.battle && !s.backToShip));
+  const canPick = s => s.id === me.squadId || !todoCount(s);
   const ready = squad?.units.filter(u => u.status === 'ready') ?? [];
 
   const pick = id => {
@@ -264,7 +271,11 @@ function MySquadPicker({ battle, uid }) {
       {!squads.length && <p className="small">Create a squad first under <Link to="/squads">My Squads</Link>.</p>}
       <select value={me.squadId ?? ''} onChange={e => pick(e.target.value)}>
         <option value="">Choose a squad…</option>
-        {free.map(s => <option key={s.id} value={s.id}>{s.name} ({squadPoints(s)} pts)</option>)}
+        {free.map(s => (
+          <option key={s.id} value={s.id} disabled={!canPick(s)}>
+            {s.name} ({squadPoints(s)} pts){canPick(s) ? '' : ', finish to-dos first'}
+          </option>
+        ))}
       </select>
       {ready.map(u => (
         <label key={u.id} className="check">
