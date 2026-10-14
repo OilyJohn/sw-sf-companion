@@ -13,14 +13,18 @@ import ScenariosPage from './pages/ScenariosPage.jsx';
 import SharedBattlePage from './pages/SharedBattlePage.jsx';
 import WeaponsPage from './pages/WeaponsPage.jsx';
 import DocumentsPage from './pages/DocumentsPage.jsx';
+import RecordsPage from './pages/RecordsPage.jsx';
+import SearchPage from './pages/SearchPage.jsx';
 
 const NAV = [
   { section: 'Squad Management', links: [
     { to: '/squads', label: 'My Squads' },
     { to: '/factions', label: 'Factions & Units' },
+    { to: '/records', label: 'Win/Loss Records' },
   ] },
   { section: 'During a Battle', links: [{ to: '/battle', label: 'Battle Tracker' }] },
   { section: 'Rules Clarifications', links: [
+    { to: '/rules/search', label: 'Search All Rules' },
     { to: '/rules/traits', label: 'Traits' },
     { to: '/rules/scenarios', label: 'Scenarios' },
     { to: '/rules/weapons', label: 'Weapons and Gear' },
@@ -76,6 +80,8 @@ export default function App() {
           <Route path="/rules/traits" element={<TraitsPage />} />
           <Route path="/rules/scenarios" element={<ScenariosPage />} />
           <Route path="/rules/weapons" element={<WeaponsPage />} />
+          <Route path="/rules/search" element={<SearchPage />} />
+          <Route path="/records" element={<RecordsPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
         </Routes>
       </main>

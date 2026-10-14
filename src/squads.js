@@ -18,6 +18,13 @@ export function useMySquads(uid) {
   return squads;
 }
 
+// Every player's squads, for the group win/loss records.
+export function useAllSquads() {
+  const [squads, setSquads] = useState(null);
+  useEffect(() => onSnapshot(squadsCol, snap => setSquads(snap.docs.map(d => ({ id: d.id, ...d.data() })))), []);
+  return squads;
+}
+
 export function useSquad(id) {
   const [squad, setSquad] = useState(undefined);
   useEffect(() => onSnapshot(doc(db, 'squads', id), d => setSquad(d.exists() ? { id: d.id, ...d.data() } : null)), [id]);

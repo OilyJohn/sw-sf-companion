@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import SignInGate from '../components/SignInGate.jsx';
+import BattleHistory from '../components/BattleHistory.jsx';
 import EquipmentPicker from '../components/EquipmentPicker.jsx';
+import RuleLinks from '../components/RuleLinks.jsx';
 import TodoTask from '../components/TodoTask.jsx';
 import { MAX_FORCE_WIELDERS, MAX_HEROES } from '../data/factions.js';
 import { GEAR_COST_PER_SLOT, slotsOf, slotsUsed } from '../data/equipment.js';
@@ -177,6 +179,8 @@ function Squad() {
         </div>
       )}
 
+      <BattleHistory history={squad.history ?? []} units={squad.units} />
+
       {mine && !squad.started && (
         <button className="btn wide big" onClick={() => confirm('Confirm your starting squad? Roles are locked after this.') && save({ started: true })}>
           Confirm starting squad
@@ -220,7 +224,7 @@ function UnitCard({ unit, squad, mine, onChange, onRole, canSucceed, onSucceed, 
         <span>Eq <b>{slotsUsed(unit.equipment)}/{st.eqSlots}</b></span>
         <span>EXP <b>{unit.exp}</b></span>
       </div>
-      {!open && st.traits.length > 0 && <div className="small"><span className="muted">Traits: </span>{st.traits.join(', ')}</div>}
+      {!open && st.traits.length > 0 && <RuleLinks label="Traits" kind="trait" names={st.traits} />}
       {unit.pending?.length > 0 && (mine
         ? unit.pending.map((p, i) => (
           <TodoTask key={i + p} unit={unit} squad={squad} text={p} onDone={(patch, extra) => onChange({
@@ -232,7 +236,7 @@ function UnitCard({ unit, squad, mine, onChange, onRole, canSucceed, onSucceed, 
       {open && (
         <div className="stack unit-body">
           {st.traits.length > 0 && <TraitList names={st.traits} />}
-          <div className="small"><span className="muted">Equipped: </span>{unit.equipment?.length ? unit.equipment.join(', ') : 'nothing'}</div>
+          <RuleLinks label="Equipped" kind="gear" names={unit.equipment ?? []} empty="nothing" />
           {mine && <>
             <label>Name<input value={unit.name} onChange={e => onChange({ name: e.target.value })} /></label>
             <label>Model notes<input value={unit.model} placeholder="e.g. red pauldron" onChange={e => onChange({ model: e.target.value })} /></label>
