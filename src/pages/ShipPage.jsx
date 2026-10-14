@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import ExpShift from '../components/ExpShift.jsx';
 import ResultPopup from '../components/ResultPopup.jsx';
 import RollInput from '../components/RollInput.jsx';
@@ -23,6 +23,7 @@ const promotionsDue = u =>
 
 function Ship() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const squad = useSquad(id);
   if (squad === undefined) return <p className="muted">Loading…</p>;
   if (squad === null) return <p>Squad not found.</p>;
@@ -98,7 +99,7 @@ function Ship() {
       </Section>
 
       {ship && (
-        <button className="btn wide" disabled={!allDone} onClick={() => saveSquad(squad.id, { backToShip: null })}>
+        <button className="btn wide" disabled={!allDone} onClick={() => { saveSquad(squad.id, { backToShip: null }); navigate(`/squads/${squad.id}`); }}>
           {allDone ? 'Finish Back to the Ship' : 'Finish injuries and promotions first'}
         </button>
       )}
