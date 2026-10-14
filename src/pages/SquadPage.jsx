@@ -6,10 +6,10 @@ import BattleHistory from '../components/BattleHistory.jsx';
 import EquipmentPicker from '../components/EquipmentPicker.jsx';
 import RuleLinks from '../components/RuleLinks.jsx';
 import TodoTask from '../components/TodoTask.jsx';
+import { TraitList } from '../components/UnitProfile.jsx';
 import { MAX_FORCE_WIELDERS, MAX_HEROES } from '../data/factions.js';
 import { GEAR_COST_PER_SLOT, slotsOf, slotsUsed } from '../data/equipment.js';
 import { FORCE_WIELDERS, ROLE_BONUS, findProfile, getFaction } from '../data/rules.js';
-import { findTrait } from '../data/traits.js';
 import { buyableGear } from '../gear.js';
 import { deleteSquad, newUnit, saveSquad, squadPoints, unitStats, useSquad } from '../squads.js';
 
@@ -402,25 +402,6 @@ function BuyGear({ squad, onBuy }) {
           Buy{item ? ` ${item} for ${cost}` : ''}
         </button>
       )}
-    </div>
-  );
-}
-
-function TraitList({ names }) {
-  return (
-    <div className="trait-list unit-traits">
-      {names.map((n, i) => {
-        const tr = findTrait(n);
-        return (
-          <div key={n + i} className="trait">
-            <b className="small">{n}</b>
-            {tr?.text
-              ? <div className="small">{tr.text}</div>
-              : <div className="small muted">No description yet.</div>}
-            {tr?.amended && <div className="amended small">{tr.amended}</div>}
-          </div>
-        );
-      })}
     </div>
   );
 }

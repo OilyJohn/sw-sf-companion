@@ -5,6 +5,7 @@ import ForcePowers from '../components/ForcePowers.jsx';
 import RollInput from '../components/RollInput.jsx';
 import RuleLinks from '../components/RuleLinks.jsx';
 import SignInGate from '../components/SignInGate.jsx';
+import UnitProfile from '../components/UnitProfile.jsx';
 import { WotfPicker } from '../components/WillOfTheForce.jsx';
 import {
   abandonBattle, addTeam, agreedScenario, answerEnd, endTurn, joinBattle, leaveBattle, proposeEnd, removeTeam, ROLL,
@@ -297,6 +298,7 @@ function MySquadPicker({ battle, uid }) {
 // --- During the battle ---
 
 // Every other player's units in this battle, with their traits and gear, to check what you're facing.
+// Tap a unit for its full profile.
 function OtherSquads({ battle, squads, uid }) {
   const me = battle.players[uid];
   const others = Object.entries(battle.players).filter(([k]) => k !== uid)
@@ -316,30 +318,39 @@ function OtherSquads({ battle, squads, uid }) {
           <span className="pill">{units.filter(u => !tracked[u.id]?.ooa).length}/{units.length} in action</span>
         </summary>
         {!squad && <p className="muted small">Loading squad…</p>}
-        {units.map(u => {
-          const st = unitStats(u, squad.faction);
-          return (
-            <div key={u.id} className={`sub ${tracked[u.id]?.ooa ? 'dim' : ''}`}>
-              <div className="row between">
-                <div>
-                  <strong>{u.name}</strong>
-                  {u.role !== 'regular' && <span className={`tag ${u.role}`}>{u.role}</span>}
-                  {u.temp && <span className="tag">Mercenary</span>}
-                  <div className="muted small">{u.type}{st ? ` · W ${st.wounds} · CC d${st.cc} · S d${st.s}` : ''}</div>
-                </div>
-                {tracked[u.id]?.ooa && <span className="pill">Out of action</span>}
-              </div>
-              {st && <>
-                <RuleLinks label="Traits" kind="trait" names={st.traits} />
-                <RuleLinks label="Gear" kind="gear" names={u.equipment ?? []} />
-                <ForcePowers unit={u} traits={st.traits} />
-              </>}
-            </div>
-          );
-        })}
+        {units.map(u => <OtherUnit key={u.id} unit={u} faction={squad.faction} ooa={tracked[u.id]?.ooa} />)}
       </details>
     );
   });
+}
+
+// One of their units: a summary line that taps open to the full profile.
+function OtherUnit({ unit: u, faction, ooa }) {
+  const [open, setOpen] = useState(false);
+  const st = unitStats(u, faction);
+  return (
+    <div className={`sub ${ooa ? 'dim' : ''}`}>
+      <button className="unit-head" aria-expanded={open} onClick={() => setOpen(o => !o)}>
+        <div>
+          <strong>{u.name}</strong>
+          {u.role !== 'regular' && <span className={`tag ${u.role}`}>{u.role}</span>}
+          {u.temp && <span className="tag">Mercenary</span>}
+          <div className="muted small">{u.type}{st ? ` · W ${st.wounds} · CC d${st.cc} · S d${st.s}` : ''}</div>
+        </div>
+        <div className="row gap">
+          {ooa && <span className="pill">Out of action</span>}
+          <span className="chevron" aria-hidden="true">{open ? '▾' : '▸'}</span>
+        </div>
+      </button>
+      {st && (open
+        ? <UnitProfile unit={u} st={st} />
+        : <>
+            <RuleLinks label="Traits" kind="trait" names={st.traits} />
+            <RuleLinks label="Gear" kind="gear" names={u.equipment ?? []} />
+            <ForcePowers unit={u} traits={st.traits} />
+          </>)}
+    </div>
+  );
 }
 
 function BattlePanel({ battle, teams, squads, uid }) {
