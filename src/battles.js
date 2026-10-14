@@ -293,6 +293,12 @@ export const answerEnd = (code, uid, agree) => change(code, b => {
   return { endProposal: { ...b.endProposal, confirms } };
 });
 
+// MVP: once the battle is over, each squad's MVP (a non-hero) is picked by its opponents.
+// mvps[squadId] is a unit id, or NO_MVP.
+export const NO_MVP = '__none';
+export const setMvp = (code, squadId, unitId) => change(code, b => (b.status === 'ended' ? { [`mvps.${squadId}`]: unitId } : null));
+export const mvpCandidates = units => units.filter(u => u.role === 'regular' && !u.temp);
+
 export const abandonBattle = code => change(code, b => (b.status === 'active' || b.status === 'lobby' ? { status: 'abandoned' } : null));
 
 export const shareLink = code => `${location.origin}${location.pathname}#/battle/game/${code}`;

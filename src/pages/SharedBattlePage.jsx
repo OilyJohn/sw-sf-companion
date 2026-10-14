@@ -5,10 +5,11 @@ import ForcePowers from '../components/ForcePowers.jsx';
 import RollInput from '../components/RollInput.jsx';
 import RuleLinks from '../components/RuleLinks.jsx';
 import SignInGate from '../components/SignInGate.jsx';
+import UnitProfile from '../components/UnitProfile.jsx';
 import { WotfPicker } from '../components/WillOfTheForce.jsx';
 import {
-  abandonBattle, addTeam, agreedScenario, answerEnd, endTurn, joinBattle, leaveBattle, proposeEnd, removeTeam, ROLL,
-  setFlag, setPlayer, setReady, setRolled, setScore, setTargetWounds, setTeamRole, shareLink, startProblems,
+  NO_MVP, abandonBattle, addTeam, agreedScenario, answerEnd, endTurn, joinBattle, leaveBattle, proposeEnd, removeTeam, ROLL,
+  mvpCandidates, setFlag, setMvp, setPlayer, setReady, setRolled, setScore, setTargetWounds, setTeamRole, shareLink, startProblems,
   teamStates, useBattle, vote, wotfLobby,
 } from '../battles.js';
 import { RESULTS, SCENARIOS } from '../data/campaign.js';
@@ -69,11 +70,14 @@ function SharedBattle() {
   const teams = teamStates(battle, squads);
   if (battle.status === 'ended') {
     const result = battle.results[me.team];
+    const opponents = opposingSquads(battle, squads, user.uid);
+    const mvpsPicked = opponents.every(o => !o.candidates.length || battle.mvps?.[o.squad.id]);
     return (
       <div className="stack">
         <Outcome battle={battle} teams={teams} heading="Battle over" />
+        <PickMvps battle={battle} opponents={opponents} />
         {mySquad?.battle?.battleId === battle.id
-          ? <EndBattle squad={mySquad} fixedResult={result} />
+          ? <EndBattle squad={mySquad} fixedResult={result} mvpPick={battle.mvps?.[mySquad.id]} mvpsPicked={mvpsPicked} />
           : <div className="card stack">
               <p className="small">Your result is recorded.</p>
               {me.squadId && <Link className="btn" to={`/squads/${me.squadId}/ship`}>Back to the Ship</Link>}
@@ -89,6 +93,47 @@ function SharedBattle() {
       <button className="btn ghost danger wide" onClick={() => confirm('Abandon this battle for everyone without recording it?') && abandonBattle(battle.id).catch(fail)}>
         Abandon battle
       </button>
+    </div>
+  );
+}
+
+// Each opposing squad in the battle, with the non-heroes who can be its MVP.
+function opposingSquads(battle, squads, uid) {
+  const me = battle.players[uid];
+  return Object.values(battle.players)
+    .filter(p => p.team !== me.team && squads[p.squadId])
+    .map(p => {
+      const squad = squads[p.squadId];
+      const units = (p.units ?? []).map(id => squad.units.find(u => u.id === id)).filter(Boolean);
+      return { player: p, squad, candidates: mvpCandidates(units) };
+    });
+}
+
+// You pick the MVP for your opponents' squads; any opponent of a squad can set or change it.
+function PickMvps({ battle, opponents }) {
+  const shown = opponents.filter(o => o.candidates.length);
+  if (!shown.length) return null;
+  return (
+    <div className="card stack">
+      <div className="nav-heading">Pick your opponents' MVP (non-heroes only)</div>
+      {shown.map(({ player, squad, candidates }) => {
+        const tracked = squad.battle?.battleId === battle.id ? squad.battle.units : null;
+        return (
+          <div key={squad.id} className="stack">
+            <label><span>{squad.name} ({player.name})</span>
+              <select value={battle.mvps?.[squad.id] ?? ''} onChange={e => e.target.value && setMvp(battle.id, squad.id, e.target.value).catch(fail)}>
+                <option value="" disabled>Choose…</option>
+                <option value={NO_MVP}>No MVP</option>
+                {candidates.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+            </label>
+            {tracked && candidates.map(u => {
+              const t = tracked[u.id];
+              return t && <div key={u.id} className="muted small">{u.name}: {t.wounds} wounds, {t.heroKills} heroes, {t.objective} objective{t.ooa ? ', out of action' : ''}</div>;
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -297,6 +342,7 @@ function MySquadPicker({ battle, uid }) {
 // --- During the battle ---
 
 // Every other player's units in this battle, with their traits and gear, to check what you're facing.
+// Tap a unit for its full profile.
 function OtherSquads({ battle, squads, uid }) {
   const me = battle.players[uid];
   const others = Object.entries(battle.players).filter(([k]) => k !== uid)
@@ -316,30 +362,39 @@ function OtherSquads({ battle, squads, uid }) {
           <span className="pill">{units.filter(u => !tracked[u.id]?.ooa).length}/{units.length} in action</span>
         </summary>
         {!squad && <p className="muted small">Loading squad…</p>}
-        {units.map(u => {
-          const st = unitStats(u, squad.faction);
-          return (
-            <div key={u.id} className={`sub ${tracked[u.id]?.ooa ? 'dim' : ''}`}>
-              <div className="row between">
-                <div>
-                  <strong>{u.name}</strong>
-                  {u.role !== 'regular' && <span className={`tag ${u.role}`}>{u.role}</span>}
-                  {u.temp && <span className="tag">Mercenary</span>}
-                  <div className="muted small">{u.type}{st ? ` · W ${st.wounds} · CC d${st.cc} · S d${st.s}` : ''}</div>
-                </div>
-                {tracked[u.id]?.ooa && <span className="pill">Out of action</span>}
-              </div>
-              {st && <>
-                <RuleLinks label="Traits" kind="trait" names={st.traits} />
-                <RuleLinks label="Gear" kind="gear" names={u.equipment ?? []} />
-                <ForcePowers unit={u} traits={st.traits} />
-              </>}
-            </div>
-          );
-        })}
+        {units.map(u => <OtherUnit key={u.id} unit={u} faction={squad.faction} ooa={tracked[u.id]?.ooa} />)}
       </details>
     );
   });
+}
+
+// One of their units: a summary line that taps open to the full profile.
+function OtherUnit({ unit: u, faction, ooa }) {
+  const [open, setOpen] = useState(false);
+  const st = unitStats(u, faction);
+  return (
+    <div className={`sub ${ooa ? 'dim' : ''}`}>
+      <button className="unit-head" aria-expanded={open} onClick={() => setOpen(o => !o)}>
+        <div>
+          <strong>{u.name}</strong>
+          {u.role !== 'regular' && <span className={`tag ${u.role}`}>{u.role}</span>}
+          {u.temp && <span className="tag">Mercenary</span>}
+          <div className="muted small">{u.type}{st ? ` · W ${st.wounds} · CC d${st.cc} · S d${st.s}` : ''}</div>
+        </div>
+        <div className="row gap">
+          {ooa && <span className="pill">Out of action</span>}
+          <span className="chevron" aria-hidden="true">{open ? '▾' : '▸'}</span>
+        </div>
+      </button>
+      {st && (open
+        ? <UnitProfile unit={u} st={st} />
+        : <>
+            <RuleLinks label="Traits" kind="trait" names={st.traits} />
+            <RuleLinks label="Gear" kind="gear" names={u.equipment ?? []} />
+            <ForcePowers unit={u} traits={st.traits} />
+          </>)}
+    </div>
+  );
 }
 
 function BattlePanel({ battle, teams, squads, uid }) {

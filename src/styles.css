@@ -158,6 +158,10 @@ h1, h2, .brand, .stat-value, .battle-code, .icon-btn, a, details summary, strong
 .statline { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0 4px; font-size: .9rem; }
 .unit-head { all: unset; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; width: 100%; cursor: pointer; }
 .unit-body { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.unit-body .nav-heading { padding: 4px 0 0; }
+.unit-body .statline { margin: 0; }
+.chevron { color: var(--accent); font-size: .9rem; }
+.sub .unit-body { margin-top: 0; }
 
 label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
 input, select, textarea {
