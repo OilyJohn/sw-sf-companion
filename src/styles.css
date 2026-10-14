@@ -86,6 +86,28 @@ h1, h2, .brand, .stat-value, .battle-code, .icon-btn, a, details summary, strong
 :root[data-theme="saber-green"]  { --blade: #14ff3c; --core: #3dff5e; --text: #c2ffcb; --accent-dim: #0f7a22; --border: #145e1f; }
 :root[data-theme="saber-purple"] { --blade: #a514ff; --core: #bb4dff; --text: #e5c2ff; --accent-dim: #5e138f; --border: #4a1870; }
 
+/* Stormtrooper White: plain light theme, black text and lines on white, no glow. */
+:root[data-theme="trooper"] {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #ececec;
+  --text: #111111;
+  --muted: #555555;
+  --accent: #000000;
+  --accent-dim: #8c8c8c;
+  --danger: #c40000;
+  --hero: #333333;
+  --border: #9a9a9a;
+  --bar-bg: #ffffff;
+  --on-accent: #ffffff;
+  --strong: #000000;
+  --glow: none;
+  --bar-glow: none;
+  color-scheme: light;
+}
+:root[data-theme="trooper"] .tag.leader, :root[data-theme="trooper"] .tag.officer, :root[data-theme="trooper"] .amended { font-weight: 500; }
+:root[data-theme="trooper"] .scrim { background: rgb(0 0 0 / .3); }
+
 /* Starry sky behind the yellow and lightsaber themes (panels stay solid so text reads cleanly). */
 :root:not([data-theme]), :root[data-theme^="saber-"] { background: url(/stars.svg) var(--bg); background-attachment: fixed; }
 :root:not([data-theme]) body, :root[data-theme^="saber-"] body { background: transparent; }

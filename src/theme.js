@@ -2,6 +2,7 @@
 export const THEMES = [
   { id: 'default', label: 'Classic Yellow', bar: '#050505' },
   { id: 'hologram', label: 'Hologram', bar: '#010816' },
+  { id: 'trooper', label: 'Stormtrooper White', bar: '#ffffff' },
   { id: 'saber-red', label: 'Lightsaber: Red', bar: '#000000' },
   { id: 'saber-blue', label: 'Lightsaber: Blue', bar: '#000000' },
   { id: 'saber-green', label: 'Lightsaber: Green', bar: '#000000' },
@@ -18,5 +19,7 @@ export function applyTheme(id) {
   if (theme.id === 'default') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = theme.id;
   document.querySelector('meta[name=theme-color]')?.setAttribute('content', theme.bar);
+  // Dark status-bar text on the white theme when installed on iPhone.
+  document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]')?.setAttribute('content', theme.id === 'trooper' ? 'default' : 'black-translucent');
   try { localStorage.setItem(KEY, theme.id); } catch { /* private mode: theme just won't persist */ }
 }
