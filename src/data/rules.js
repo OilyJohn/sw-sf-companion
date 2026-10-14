@@ -9,6 +9,8 @@ export const ROLE_BONUS = {
 };
 
 export const FORCE_UNITS = new Set(['Jedi/Sith']);
+// Units that count toward the force wielder limit (Magick Lightning is a renamed force power, Alex).
+export const FORCE_WIELDERS = new Set([...FORCE_UNITS, 'Nightsister Witch', 'Nightsister Shaman', 'Mother']);
 
 export function getFaction(id) {
   return factions.find(f => f.id === id);
