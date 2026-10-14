@@ -9,11 +9,11 @@ const w = (name, range, notes, wound, extra = {}) => ({ name, range, notes, woun
 
 export const GEAR_GROUPS = [
   { id: 'melee', name: 'Close Combat Weapons', sub: 'Weapons doc', items: [
-    w('Combat Knife', '-', 'Dagger', 'Regular', { aliases: ['Bayonet'] }),
+    w('Combat Knife', '-', 'Dagger', 'Regular', { aliases: ['Bayonet', 'Dagger'] }),
     w('Axe', '-', 'Wound roll +1', 'Regular'),
     w('Blunt Weapon', '-', 'AP1', 'Regular', { aliases: ['Club'] }),
-    w('2H Axe', '-', 'Wound roll +1, AP1', 'Regular'),
-    w('2H Sword', '-', 'CC +1', 'Regular'),
+    w('2H Axe', '-', 'Wound roll +1, AP1', 'Regular', { aliases: ['2 Hand Axe (Flail)'] }),
+    w('2H Sword', '-', 'CC +1', 'Regular', { aliases: ['Conjured 2H Sword'] }),
     w('2H Blunt Weapon', '-', 'Add +1 shock to wound result, AP1', 'Regular'),
     w('Stun Baton', '-', '', 'Stun'),
     w('Vibrosword', '-', 'AP1', 'Regular'),
@@ -45,7 +45,7 @@ export const GEAR_GROUPS = [
   ] },
   { id: 'thrown', name: 'Grenades & Thrown', sub: 'Weapons doc', items: [
     w('Thermal Detonator', 'd10+3"', 'See main rulebook', 'Regular', {
-      aliases: ['Wrist Rocket', 'Wrist Rockets'],
+      aliases: ['Wrist Rocket', 'Wrist Rockets', 'Green Fireball'],
       text: 'GH grenade: pick a target point, roll d10 and add 3" for how far it flies along that line, then centre the 3" Blast template there. A Shoot roll of 1 blows up in the thrower\'s hand: +1 on the Wound roll and friends under the template are hit too.',
       ref: 'GH pp. 41, 44',
     }),

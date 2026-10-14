@@ -15,13 +15,13 @@ export const mercenaries = {
   units: [
     u(8, 'Mercenary', 1, 8, 8, [], MERC_GUN, 2, ['Gunner']),
     u(12, 'Gunner', 1, 8, 10, [], MERC_GUN, 3, ['Guild Marksman']),
-    u(16, 'Guild Marksman', 1, 8, 12, ['Sniper', 'Bounty Hunter'], [...MERC_GUN], 3),
+    u(20, 'Guild Marksman', 1, 8, 12, ['Sniper', 'Bounty Hunter'], [...MERC_GUN], 3),
     u(8, 'Hired Muscle', 1, 8, 8, [], MERC_MELEE, 2, ['Pit Fighter']),
     u(12, 'Pit Fighter', 1, 10, 8, [], [...MERC_MELEE, 'Vibrosword', 'Heavy Armour'], 3, ['Guild Brute']),
     u(18, 'Guild Brute', 1, 12, 8, ['Street Fighter', 'Bounty Hunter'], [...MERC_MELEE, 'Vibrosword', 'Heavy Armour'], 3),
     u(8, 'Death Stick Addict', 1, 8, 8, [], MERC_DEMO, 2, ['Terrorist']),
     u(12, 'Terrorist', 1, 8, 8, ['Sprinter'], [...MERC_DEMO, 'Light Armour'], 4, ['Guild Demolitions Expert']),
-    u(18, 'Guild Demolitions Expert', 1, 8, 10, ['Sprinter', 'Bounty Hunter'], [...MERC_DEMO, 'Heavy Armour'], 6),
+    u(18, 'Guild Demolitions Expert', 1, 8, 10, ['Sprinter', 'Bounty Hunter'], [...MERC_DEMO, 'Light Armour', 'Heavy Armour'], 6),
   ],
 };
 
@@ -44,12 +44,15 @@ const MANDO_R = ['Blaster Carbine', 'Blaster Rifle', 'Repeating Blaster', 'Jet P
 const B1 = ['Blaster Rifle', 'Blaster Carbine', 'Repeating Blaster', 'Thermal Detonator'];
 const BX = ['Vibrosword', 'Blaster Pistol', 'Thermal Detonator'];
 const MAGNA = ['Electrostaff', 'Light Armour', 'Blaster Pistol'];
+const NS_WARRIOR = ['2 Hand Axe (Flail)', 'Dagger', 'Throwing Weapons', 'Light Armour'];
+const NS_ARCHER = ['Bow', 'Light Armour'];
+const NS_WITCH = ['Conjured 2H Sword', 'Light Armour'];
 
 export const factions = [
   {
     id: 'gar', name: 'Grand Army of the Republic', complete: true, promotionsInferred: true,
     reinforcements: { 'Clone Trooper': 12, 'Clone Marksman': 13, 'ARC Trooper': 16, 'Jedi/Sith': 19 },
-    exampleCompany: ['1 Jedi', '1 ARC Trooper', '1 Clone Marksman', '3 Credits Leftover'],
+    exampleCompany: ['1 Jedi', '1 ARC Trooper', '1 Clone Marksman', '2 Credits Leftover'],
     units: [
       u(12, 'Clone Trooper', 1, 8, 10, ['Loyal'], CLONE_GUNS, 3, ['Clone Marine']),
       u(15, 'Clone Marine', 1, 8, 10, ['Loyal', 'Sprinter'], CLONE_GUNS, 4, ['Clone Commando']),
@@ -102,7 +105,7 @@ export const factions = [
     units: [
       u(13, 'Mandalorian Gunslinger', 1, 8, 10, ['Two Gunned'], MANDO_GS, 3, ['Mandalorian Commando']),
       u(17, 'Mandalorian Commando', 1, 8, 10, ['Two Gunned', 'Quickdraw'], MANDO_GS, 4, ['Mandalorian Super Commando']),
-      u(25, 'Mandalorian Super Commando', 1, 10, 10, ['Two Gunned', 'Quickdraw', 'Killer'], [...MANDO_GS, 'Heavy Armour'], 4),
+      u(24, 'Mandalorian Super Commando', 1, 10, 10, ['Two Gunned', 'Quickdraw', 'Killer'], [...MANDO_GS, 'Heavy Armour'], 4),
       u(13, 'Mandalorian Warrior', 1, 10, 8, ['Quick'], MANDO_W, 3, ['Mandalorian Crusader']),
       u(16, 'Mandalorian Crusader', 1, 10, 8, ['Quick', 'Dodge'], [...MANDO_W, 'Energy Shield (Buckler)', 'Heavy Armour'], 4, ['Mandalorian Blademaster']),
       u(23, 'Mandalorian Blademaster', 1, 12, 8, ['Quick', 'Dodge', 'Ferocious'], [...MANDO_W, 'Energy Shield (Buckler)', 'Heavy Armour'], 4),
@@ -130,6 +133,28 @@ export const factions = [
       u(15, 'IG-100 MagnaGuard', 1, 10, 8, ['Soulless', 'Last Stand'], MAGNA, 3, ['General’s Bodyguard']),
       u(19, 'General’s Bodyguard', 1, 10, 8, ['Soulless', 'Last Stand', 'Flurry of Blows', 'Lightning Fast'], [...MAGNA, 'Heavy Armour'], 3, ['MagnaGuard Taskmaster']),
       u(26, 'MagnaGuard Taskmaster', 1, 12, 8, ['Soulless', 'Last Stand', 'Flurry of Blows', 'Lightning Fast', 'Steadfast Defence'], [...MAGNA, 'Heavy Armour', 'Electro Whip'], 5),
+    ],
+  },
+  {
+    id: 'nightsisters', name: 'Nightsisters', complete: true, promotionsInferred: true,
+    // The PDF has no info page for this faction yet: reinforcements default to each line's base unit
+    // at its points value (as every other faction does), pending Alex's confirmation.
+    reinforcements: { 'Nightsister Zombie': 7, 'Nightsister Warrior': 12, 'Nightsister Archer': 11, 'Nightsister Witch': 17, 'Jedi/Sith': 19 },
+    aliases: { 'Green Fireball': 'Thermal Detonator', 'Magick Lightning': 'Force Lightning' },
+    // Acrobat/Assassin W and Ranger/Hunter Eq are blank in the PDF; filled in to match their points.
+    units: [
+      u(7, 'Nightsister Zombie', 1, 8, 8, ['Soulless', 'Pugilist'], [], 0, ['Undead Dasher']),
+      u(12, 'Undead Dasher', 1, 10, 8, ['Soulless', 'Pugilist', 'Quick', 'Survivor'], [], 0, ['Reanimated Lunatic']),
+      u(17, 'Reanimated Lunatic', 1, 10, 8, ['Soulless', 'Pugilist', 'Quick', 'Survivor', 'Bloodthirsty', 'Armoured'], [], 0),
+      u(12, 'Nightsister Warrior', 1, 10, 8, ['Fancy Footwork'], NS_WARRIOR, 2, ['Nightsister Acrobat']),
+      u(17, 'Nightsister Acrobat', 1, 10, 8, ['Fancy Footwork', 'Acrobatic', 'Dodge'], [...NS_WARRIOR, 'Heavy Armour'], 3, ['Nightsister Assassin']),
+      u(24, 'Nightsister Assassin', 1, 12, 8, ['Fancy Footwork', 'Acrobatic', 'Dodge', 'Weapon Master'], [...NS_WARRIOR, 'Heavy Armour'], 4),
+      u(11, 'Nightsister Archer', 1, 8, 10, [], NS_ARCHER, 2, ['Nightsister Ranger']),
+      u(16, 'Nightsister Ranger', 1, 8, 10, ['Deep Breath', 'Lightning Fast'], [...NS_ARCHER, 'Throwing Weapons', 'Combat Knife'], 3, ['Nightsister Hunter']),
+      u(23, 'Nightsister Hunter', 1, 8, 12, ['Deep Breath', 'Lightning Fast', 'Deft', 'Steady'], [...NS_ARCHER, 'Throwing Weapons', 'Combat Knife'], 3),
+      u(17, 'Nightsister Witch', 1, 10, 10, ['Magick Lightning'], NS_WITCH, 2, ['Nightsister Shaman']),
+      u(21, 'Nightsister Shaman', 1, 10, 10, ['Magick Lightning', 'Run & Gun'], [...NS_WITCH, 'Green Fireball'], 3, ['Mother']),
+      u(27, 'Mother', 1, 10, 12, ['Magick Lightning', 'Run & Gun', 'Fearsome Appearance'], [...NS_WITCH, 'Green Fireball'], 4),
     ],
   },
 ];

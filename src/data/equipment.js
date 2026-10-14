@@ -8,6 +8,8 @@ export const EQUIPMENT_SLOTS = {
   'Axe': 1,
   'Club': 1,
   '2H Axe': 2,
+  '2 Hand Axe (Flail)': 2, // Nightsisters; treated as 2H Axe
+  'Dagger': 1, // Nightsisters; = Combat Knife
   '2H Weapons': 2,
   'Vibrosword': 1,
   'Electrostaff': 2,
@@ -26,6 +28,7 @@ export const EQUIPMENT_SLOTS = {
   'Thermal Detonator': 1,
   'Wrist Rocket': 1,
   'Wrist Rockets': 1,
+  'Green Fireball': 1, // = Thermal Detonator (Nightsisters)
   'Shock Grenade': 1,
   'Throwing Weapons': 1,
   'Light Armour': 1, // GH
@@ -37,6 +40,7 @@ export const EQUIPMENT_SLOTS = {
   // In the Weapons doc but on no unit profile: heroes can still buy them.
   'Blunt Weapon': 1,
   '2H Sword': 2,
+  'Conjured 2H Sword': 2, // Nightsisters; = 2H Sword
   '2H Blunt Weapon': 2,
   'Stun Baton': 1,
   'Force Pike': 2,
