@@ -2,7 +2,8 @@
 // Quick Reference is page 3 of Alex's "Gameplay Rules Amendments".
 // Every other section is a short summary, in our own words, of the Galactic Heroes 2nd Edition
 // rulebook (the "GH p." numbers are the page numbers printed in the book), with the
-// Amendments overriding anything they mention. `amended` marks those points and says what GH had.
+// Amendments overriding anything they mention. `amended` marks those points
+// (a string says what changed) and `gh` says what the old GH rule was.
 
 export const QUICK_REFERENCE = [
   { title: 'Suit Order', text: '♠ Spades, ♥ Hearts, ♦ Diamonds, ♣ Clubs. When two players hold the same card value, the earlier suit goes first.' },
@@ -95,7 +96,7 @@ export const SECTIONS = [
         ['6s', 'Reload automatically. The model still gets its 2 actions.'],
         ['Deuces', 'Once, roll 2 dice for a Shooting, Close Combat, Task or Recovery roll and keep the best.'],
         ['Aces', 'Wild.'],
-      ], amended: 'Queen of Hearts changed. GH: automatically heals 1 wound (and stands the model up) every time.', ref: 'GH p.5' },
+      ], amended: 'Queen of Hearts changed.', gh: 'Automatically heals 1 wound (and stands the model up) every time.', ref: 'GH p.5' },
     ],
   },
   {
@@ -146,7 +147,7 @@ export const SECTIONS = [
         '-1 per Wound and Shock marker on the shooter',
         'Target Downed -1 / Target Creeping -1',
         'Shooter Aimed with its first action +2',
-      ], amended: 'Aim is now +2. GH: +1.', ref: 'GH p.10' },
+      ], amended: 'Aim is now +2.', gh: '+1.', ref: 'GH p.10' },
       { title: 'Line of sight', text: [
         'You need a clear straight line not blocked by models or terrain. Agree it at eye level when unsure.',
         'Models inside terrain or buildings can only see out, or be seen, within 1" of the edge, door or window.',
@@ -180,7 +181,7 @@ export const SECTIONS = [
         'Both models roll their Quality die and add modifiers. The higher total wins and rolls to wound the loser, with a bonus from the difference:',
       ], table: [['1-2', '+0'], ['3-4', '+1'], ['5-6', '+2'], ['7 or more', '+3']], ref: 'GH p.12' },
       { title: 'After winning', text: 'If the loser is not taken out, the winner chooses: stay locked in combat, push the loser straight back 2", or swap places with them.', ref: 'GH p.12' },
-      { title: 'Ties', text: 'If the totals are tied after modifiers, the units stay locked in combat and nobody rolls to wound.', amended: 'GH let the initiator choose to keep or push away the opponent on a tie.', ref: 'GH p.12' },
+      { title: 'Ties', text: 'If the totals are tied after modifiers, the units stay locked in combat and nobody rolls to wound.', amended: true, gh: 'On a tie the initiator chose to keep or push away the opponent.', ref: 'GH p.12' },
       { title: 'Close Combat modifiers', list: [
         '-1 per Wound and Shock marker',
         'Outnumbered: -1 per attacker after the first',
@@ -195,7 +196,7 @@ export const SECTIONS = [
         'A Shaken model fights at -1 per Shock marker. If it wins, it removes all its Shock.',
         'A Downed model stays down and fights at -1 for being prone, plus its Wound and Shock penalties. If it wins, it may roll straight away to stand.',
       ], ref: 'GH pp. 15, 17' },
-      { title: 'Deadly weapons', text: 'A natural Close Combat roll of 10+ is an automatic Wounded result.', amended: 'Nerfed. GH: Deadly puts the target straight Out of Action.', ref: 'GH p.44' },
+      { title: 'Deadly weapons', text: 'A natural Close Combat roll of 10+ is an automatic Wounded result.', amended: 'Nerfed.', gh: 'Deadly puts the target straight Out of Action.', ref: 'GH p.44' },
       { title: 'Knocking down doors', text: [
         'Fight it like Close Combat against a fixed roll: wooden fence 3, door 4, reinforced door 6, stone wall or rubble 7. Beat it and roll to wound: Shaken does nothing, Wounded damages it, and a result that would take it out destroys it (or opens a 2" gap). You cannot be hurt attacking a door.',
       ], ref: 'GH p.14' },
@@ -207,7 +208,7 @@ export const SECTIONS = [
     sub: 'GH pp. 15-16, 36-37',
     items: [
       { title: 'When you are hit', text: 'Each hit from Shooting, Close Combat or falling: roll armour first (if the model has any), then roll on the Wound Table.', ref: 'GH pp. 15, 36' },
-      { title: 'Regular Wound Table (D10)', table: [['2-', 'Nothing'], ['3-6', 'Shaken'], ['7+', 'Wounded'], ['Nat 10+', 'Wounded & Downed']], foot: '+1 to the roll for each wound the target has already sustained.', amended: 'GH: 0- nothing, 1-5 Shaken, 6-8 Wounded & Down, 9+ Out of Action.', ref: 'GH p.15' },
+      { title: 'Regular Wound Table (D10)', table: [['2-', 'Nothing'], ['3-6', 'Shaken'], ['7+', 'Wounded'], ['Nat 10+', 'Wounded & Downed']], foot: '+1 to the roll for each wound the target has already sustained.', amended: true, gh: '0- nothing, 1-5 Shaken, 6-8 Wounded & Down, 9+ Out of Action.', ref: 'GH p.15' },
       { title: 'Stun Wound Table (D10)', table: [['2-', 'Nothing'], ['3-5', 'Shaken'], ['6-7', 'Shaken x2'], ['8+', 'Wounded'], ['Nat 10+', 'Wounded, Downed & Shaken']], foot: '+1 to the roll vs droids.', amended: 'New table, not in GH.' },
       { title: 'Shaken', list: [
         'Add a Shock marker.',
@@ -219,7 +220,7 @@ export const SECTIONS = [
         'Add a Wound marker: -1 to Shooting, Close Combat, Task and Recovery rolls, and -1" per move action, on top of any Shock.',
         'A unit reduced to 0 wounds is taken off the battlefield (then rolls for injuries back at the ship).',
         'Only a Queen of Hearts or a medic removes a Wound.',
-      ], amended: 'Being Wounded no longer knocks a model down by itself; only a natural 10+ does. GH: 3 Wounds is Out of Action; your units use their own W value.', ref: 'GH pp. 15-16' },
+      ], amended: 'Being Wounded no longer knocks a model down by itself; only a natural 10+ does. Your units use their own W value.', gh: '3 Wounds is Out of Action.', ref: 'GH pp. 15-16' },
       { title: 'Downed', list: [
         'The model lies prone (lay it down or mark it). It must try to stand when it next activates (see Recovery).',
         'It does not exert the 1" zone of control, and shooting at it is -1.',
@@ -240,7 +241,7 @@ export const SECTIONS = [
     sub: 'GH pp. 6, 18, 20',
     items: [
       { title: 'What counts as an action', text: 'Each activation gives two actions, in any order and possibly the same twice: move, shoot, pick up or drop something, switch weapons, recover, aim, reload, attempt a task, or anything else everyone agrees on.', ref: 'GH p.6' },
-      { title: 'Aim', text: 'Spend your first action aiming to get +2 on a shot with your second.', amended: 'GH: +1.', ref: 'GH p.10' },
+      { title: 'Aim', text: 'Spend your first action aiming to get +2 on a shot with your second.', amended: true, gh: '+1.', ref: 'GH p.10' },
       { title: 'Reload', text: 'Both actions of one activation, back to back. A 6 card reloads automatically and keeps both actions.', ref: 'GH p.9' },
       { title: 'Ready', list: [
         'Use an action to Ready (overwatch) and mark the model.',
@@ -268,7 +269,7 @@ export const SECTIONS = [
         'Recovery roll: one action, on the Shock Recovery Table below.',
         'Only one recovery attempt per turn. A model starting within 1" of an enemy must fight instead.',
       ], ref: 'GH p.17' },
-      { title: 'Shock Recovery Table (D10)', table: SHOCK_RECOVERY, foot: '-1 to the roll for each Shock and Wound token on the unit.', amended: 'GH: 1 = removed from play, 2-5 may fall back 5" from the enemy, 6+ remove all Shock.', ref: 'GH p.17' },
+      { title: 'Shock Recovery Table (D10)', table: SHOCK_RECOVERY, foot: '-1 to the roll for each Shock and Wound token on the unit.', amended: true, gh: '1 = removed from play, 2-5 may fall back 5" from the enemy, 6+ remove all Shock.', ref: 'GH p.17' },
       { title: 'Downed Recovery Table (D10)', table: DOWNED_RECOVERY, foot: '-1 to the roll for each Shock and Wound token on the unit. A Downed model must try this when activated, unless it starts in Close Combat.', ref: 'GH p.17' },
       { title: 'Recovery shortcuts', list: [
         'Queen of Spades: remove all Shock, no roll.',
@@ -278,7 +279,7 @@ export const SECTIONS = [
       { title: 'Leader', text: '+1 to Shock and Downed recovery rolls if within 12" and line of sight of a unit with the Leader trait. A natural 1 still fails.', ref: 'GH p.21' },
       { title: 'Retreat', text: [
         'At the start of its activation, if a unit has more Shock tokens than remaining wounds, it takes a Task roll based on the excess:',
-      ], table: [['Exceeds by 1', 'Easy (3+)'], ['Exceeds by 2', 'Medium (5+)'], ['Exceeds by 3', 'Hard (8+)']], foot: 'Pass: activate as normal. Fail: Run Away (2 full moves directly away from whatever last shocked it), then its activation ends.', amended: 'GH: retreat 2 moves automatically, then remove Shock down to remaining wounds; routs if it has nowhere to go.', ref: 'GH p.18' },
+      ], table: [['Exceeds by 1', 'Easy (3+)'], ['Exceeds by 2', 'Medium (5+)'], ['Exceeds by 3', 'Hard (8+)']], foot: 'Pass: activate as normal. Fail: Run Away (2 full moves directly away from whatever last shocked it), then its activation ends.', amended: true, gh: 'Retreat 2 moves automatically, then remove Shock down to remaining wounds; routs if it has nowhere to go.', ref: 'GH p.18' },
     ],
   },
   {

@@ -159,6 +159,7 @@ input:focus, select:focus, textarea:focus { --edge: var(--accent); border-color:
 .trait { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--border); }
 .roll { display: inline-block; min-width: 4.2em; margin-right: 6px; color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
 .amended { color: var(--hero); }
+.gh-old { color: var(--muted); font-size: .7rem; font-style: italic; }
 .levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
 .level { --cut: 8px; background: var(--panel-2); padding: 6px; display: grid; gap: 2px; text-align: center; }
 .unit-traits { margin-top: 0; }
