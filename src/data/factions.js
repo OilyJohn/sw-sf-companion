@@ -137,11 +137,9 @@ export const factions = [
   },
   {
     id: 'nightsisters', name: 'Nightsisters', complete: true, promotionsInferred: true,
-    // The PDF has no info page for this faction yet: reinforcements default to each line's base unit
-    // at its points value (as every other faction does), pending Alex's confirmation.
+    // No info page in the PDF: reinforcements are each line's base unit at its points (confirmed by Alex).
     reinforcements: { 'Nightsister Zombie': 7, 'Nightsister Warrior': 12, 'Nightsister Archer': 11, 'Nightsister Witch': 17, 'Jedi/Sith': 19 },
     aliases: { 'Green Fireball': 'Thermal Detonator', 'Magick Lightning': 'Force Lightning' },
-    // Ranger/Hunter Eq are blank in the PDF; filled in to match their points.
     units: [
       u(7, 'Nightsister Zombie', 1, 8, 8, ['Soulless', 'Pugilist'], [], 0, ['Undead Dasher']),
       u(13, 'Undead Dasher', 1, 10, 8, ['Soulless', 'Pugilist', 'Quick', 'Survivor'], [], 0, ['Reanimated Lunatic']),
