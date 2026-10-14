@@ -6,7 +6,7 @@ import RollInput from '../components/RollInput.jsx';
 import RuleLinks from '../components/RuleLinks.jsx';
 import SignInGate from '../components/SignInGate.jsx';
 import { WotfPanel, WotfPicker, mercsChosen } from '../components/WillOfTheForce.jsx';
-import { createBattle, normaliseCode, useMyBattles } from '../battles.js';
+import { NO_MVP, createBattle, mvpCandidates as mvpPool, normaliseCode, useMyBattles } from '../battles.js';
 import { RESULTS, SCENARIOS } from '../data/campaign.js';
 import { MERC_HIRE_COST, blankWotf, bonusCost, bonusCredits, bonusExp, countOf } from '../data/willOfTheForce.js';
 import { saveSquad, squadPoints, tempMerc, todoCount, unitStats, unitsPoints, useMySquads, useSquad, withoutTemp } from '../squads.js';
@@ -292,18 +292,23 @@ export function Counter({ label, value, onChange, max = Infinity }) {
 const battleExp = (t, mvp = false) => 1 + (t.wounds > 0 ? 1 : 0) + t.heroKills + t.objective + (mvp ? 1 : 0);
 
 // `fixedResult`: the result every player agreed in a shared battle.
-export function EndBattle({ squad, onBack, fixedResult = null }) {
+// `mvpPick`: in a shared battle, the MVP the opponents picked (undefined while they haven't);
+// `mvpsPicked`: whether this player has picked an MVP for every opposing squad.
+export function EndBattle({ squad, onBack, fixedResult = null, mvpPick, mvpsPicked = true }) {
   const navigate = useNavigate();
   const { battle } = squad;
   const wotf = battle.wotf;
   const [result, setResult] = useState(fixedResult);
   const [creditRoll, setCreditRoll] = useState(null);
   const [creditIrl, setCreditIrl] = useState(false);
-  const [mvp, setMvp] = useState('');
+  const [mvpChoice, setMvp] = useState('');
   const [hire, setHire] = useState(() => new Set());
   const units = squad.units.filter(u => battle.units[u.id]);
   const mercs = units.filter(u => u.temp);
-  const mvpCandidates = units.filter(u => u.role === 'regular' && !u.temp);
+  const mvpCandidates = mvpPool(units);
+  const shared = !!fixedResult;
+  const mvp = shared ? (mvpPick && mvpPick !== NO_MVP ? mvpPick : '') : mvpChoice;
+  const waitingMvp = shared && mvpCandidates.length > 0 && mvpPick === undefined;
   const extraCredits = result ? bonusCredits(wotf?.bonuses, result) : 0;
   const extraExp = result ? bonusExp(wotf?.bonuses, result) : 0;
   const credits = result && creditRoll !== null ? creditRoll + RESULTS[result].credits + extraCredits : null;
@@ -375,18 +380,27 @@ export function EndBattle({ squad, onBack, fixedResult = null }) {
         </div>
       )}
 
-      <div className="card stack">
-        <div className="nav-heading">MVP (chosen by your opponent, non-heroes only)</div>
-        <select value={mvp} onChange={e => setMvp(e.target.value)}>
-          <option value="">No MVP</option>
-          {mvpCandidates.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-        </select>
-        <div className="muted small">Battle record to help pick:</div>
-        {mvpCandidates.map(u => {
-          const t = battle.units[u.id];
-          return <div key={u.id} className="small">{u.name}: {t.wounds} wounds, {t.heroKills} heroes, {t.objective} objective{t.ooa ? ', out of action' : ''}</div>;
-        })}
-      </div>
+      {shared ? (
+        <div className="card stack">
+          <div className="nav-heading">Your MVP (chosen by your opponents)</div>
+          {!mvpCandidates.length ? <div className="muted small">No non-heroes took part, so no MVP.</div>
+            : waitingMvp ? <div className="muted small">Waiting for your opponents to pick.</div>
+            : <div className="small">{units.find(u => u.id === mvp)?.name ?? 'No MVP'}</div>}
+        </div>
+      ) : (
+        <div className="card stack">
+          <div className="nav-heading">MVP (chosen by your opponent, non-heroes only)</div>
+          <select value={mvpChoice} onChange={e => setMvp(e.target.value)}>
+            <option value="">No MVP</option>
+            {mvpCandidates.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+          <div className="muted small">Battle record to help pick:</div>
+          {mvpCandidates.map(u => {
+            const t = battle.units[u.id];
+            return <div key={u.id} className="small">{u.name}: {t.wounds} wounds, {t.heroKills} heroes, {t.objective} objective{t.ooa ? ', out of action' : ''}</div>;
+          })}
+        </div>
+      )}
 
       <div className="card stack">
         <div className="nav-heading">EXP gained</div>
@@ -399,7 +413,8 @@ export function EndBattle({ squad, onBack, fixedResult = null }) {
         ))}
       </div>
 
-      <button className="btn wide" disabled={credits === null} onClick={finish}>Record result and go Back to the Ship</button>
+      {shared && !mvpsPicked && <div className="warn small">Pick an MVP for each opposing squad first.</div>}
+      <button className="btn wide" disabled={credits === null || waitingMvp || !mvpsPicked} onClick={finish}>Record result and go Back to the Ship</button>
       {onBack && <button className="btn ghost wide" onClick={onBack}>Back to tracker</button>}
     </div>
   );
