@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { SECTIONS } from '../data/gameplayRules.js';
 
-const textOf = it => [it.title, it.text, it.list, it.after, it.table, it.foot, it.amended].flat(2).filter(Boolean).join(' ').toLowerCase();
+const textOf = it => [it.title, it.text, it.list, it.after, it.table, it.foot, it.amended, it.gh].flat(2).filter(Boolean).join(' ').toLowerCase();
 const paras = t => (Array.isArray(t) ? t : t ? [t] : []);
 
 function RuleItem({ it }) {
@@ -21,6 +21,7 @@ function RuleItem({ it }) {
       )}
       {it.foot && <div className="small muted"><i>{it.foot}</i></div>}
       {typeof it.amended === 'string' && <div className="amended small">{it.amended}</div>}
+      {it.gh && <div className="gh-old">Old GH rule: {it.gh}</div>}
       {it.ref && <div className="muted small">{it.ref}</div>}
     </div>
   );
