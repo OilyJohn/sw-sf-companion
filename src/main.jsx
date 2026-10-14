@@ -7,6 +7,9 @@ import '@fontsource/oswald/400.css';
 import '@fontsource/oswald/500.css';
 import '@fontsource/oswald/700.css';
 import './styles.css';
+import { applyTheme, getTheme } from './theme.js';
+
+applyTheme(getTheme());
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

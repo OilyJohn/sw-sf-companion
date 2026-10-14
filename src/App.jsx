@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth.jsx';
 import { signIn, signOutUser } from './firebase.js';
+import { THEMES, applyTheme, getTheme } from './theme.js';
 import SquadsPage from './pages/SquadsPage.jsx';
 import SquadPage from './pages/SquadPage.jsx';
 import FactionsPage from './pages/FactionsPage.jsx';
@@ -36,6 +37,7 @@ const NAV = [
 export default function App() {
   const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState(getTheme);
   const location = useLocation();
   const title = location.pathname.endsWith('/ship') ? 'Back to the Ship' : NAV.flatMap(s => s.links).find(l => location.pathname.startsWith(l.to))?.label ?? 'Special Forces';
 
@@ -55,6 +57,11 @@ export default function App() {
           </div>
         ))}
         <div className="nav-footer">
+          <label className="theme-picker">Theme
+            <select value={theme} onChange={e => { applyTheme(e.target.value); setTheme(e.target.value); }}>
+              {THEMES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
+          </label>
           {user ? (
             <>
               <div className="muted small">{user.displayName ?? user.email}</div>
