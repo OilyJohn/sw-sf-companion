@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { GEAR_GROUPS, PROPERTIES } from '../data/weapons.js';
 import { slotsOf } from '../data/equipment.js';
 
-const textOf = it => [it.name, it.aliases, it.range, it.notes, it.wound, it.text, it.amended, it.tag].flat().filter(Boolean).join(' ').toLowerCase();
+const textOf = it => [it.name, it.aliases, it.range, it.notes, it.wound, it.text, it.amended, it.tag, typeof it.gh === 'string' && it.gh].flat().filter(Boolean).join(' ').toLowerCase();
 const slotLabel = name => `${slotsOf(name)} slot${slotsOf(name) === 1 ? '' : 's'}`;
 
 function GearItem({ it }) {
@@ -47,6 +47,7 @@ export default function WeaponsPage() {
         <div className="small">{it.text}</div>
         {it.amended && <div className="amended small">{it.amended}</div>}
         {it.ref && <div className="muted small">{it.ref}</div>}
+        {it.gh && <div className="gh-old">Old GH rule: {it.gh}</div>}
       </div>
     ) },
   ].map(g => ({ ...g, shown: g.items.filter(it => !q || g.name.toLowerCase().includes(q) || textOf(it).includes(q)) }))
