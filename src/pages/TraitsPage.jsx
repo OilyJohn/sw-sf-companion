@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { factions, forceUser, mercenaries } from '../data/factions.js';
+import { RulePopup } from '../components/RuleLinks.jsx';
 import { LIGHTSABER_FORMS, TRAIT_TABLES, findTrait } from '../data/traits.js';
+import { formLevelRule } from '../ruleLookup.js';
 
 const SOURCES = {
   SF: 'Star Wars: Special Forces',
@@ -18,6 +20,7 @@ const matches = (q, ...fields) => fields.some(f => f && f.toLowerCase().includes
 export default function TraitsPage() {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(() => new Set());
+  const [formLevel, setFormLevel] = useState(null);
   const q = query.trim().toLowerCase();
 
   const tables = useMemo(() => TRAIT_TABLES.map(tb => ({
@@ -83,7 +86,7 @@ export default function TraitsPage() {
                   <div className="small muted">{f.text}</div>
                   <div className="levels">
                     {f.levels.map((lv, i) => (
-                      <div key={i} className="level"><span className="muted small">{'I'.repeat(i + 1)}</span><span className="small">{lv.join(' + ')}</span></div>
+                      <button key={i} type="button" className="level" onClick={() => setFormLevel(formLevelRule(f, i))}><span className="muted small">{'I'.repeat(i + 1)}</span><span className="small rule-link">{lv.join(' + ')}</span></button>
                     ))}
                   </div>
                 </div>
@@ -110,6 +113,8 @@ export default function TraitsPage() {
           )}
         </div>
       )}
+
+      {formLevel && <RulePopup rule={formLevel} onClose={() => setFormLevel(null)} />}
 
       {!tables.some(tb => tb.shown.length) && !forms.length && !undescribed.length && <p className="muted">No traits match "{query}".</p>}
     </div>

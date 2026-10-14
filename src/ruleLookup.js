@@ -52,3 +52,14 @@ export function gearRule(name) {
   const shownAs = norm(it.name) === norm(name) ? '' : ` (${it.name})`;
   return { title: name + shownAs, sub: `${it.group} · ${slots}`, lines };
 }
+
+// One level of a lightsaber form, e.g. ['Ferocious (4)', 'Brittle (-1)'], with each trait's rule.
+export function formLevelRule(form, levelIndex) {
+  const lines = [];
+  for (const n of form.levels[levelIndex]) {
+    const tr = findTrait(n.replace(/\s*\(-?\d+\)$/, ''));
+    lines.push({ label: n, text: tr?.text || 'No description in your docs yet.' });
+    if (tr?.amended) lines.push({ text: tr.amended, amended: true });
+  }
+  return { title: form.name, sub: `Level ${'I'.repeat(levelIndex + 1)}`, lines };
+}

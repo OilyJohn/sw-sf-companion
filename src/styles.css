@@ -186,6 +186,7 @@ input:focus, select:focus, textarea:focus { --edge: var(--accent); border-color:
 .gh-old { color: var(--muted); font-size: .7rem; font-style: italic; }
 .levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
 .level { --cut: 8px; background: var(--panel-2); padding: 6px; display: grid; gap: 2px; text-align: center; }
+button.level { border: 0; font: inherit; color: var(--text); cursor: pointer; }
 .unit-traits { margin-top: 0; }
 .unit-traits .trait:first-child { border-top: 0; padding-top: 0; }
 .equip-picker { display: grid; gap: 0; margin-top: 6px; }
