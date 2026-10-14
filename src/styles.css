@@ -75,14 +75,14 @@ h1, h2, .brand, .stat-value, .battle-code, .icon-btn, a, details summary, strong
   --hero: #ffffff;
   --on-accent: #000;
   --strong: #fff;
-  --glow: 0 0 4px var(--blade), 0 0 10px var(--blade);
+  --glow: 0 0 3px var(--blade), 0 0 10px var(--blade), 0 0 18px var(--blade);
   --bar-glow: 0 0 14px var(--blade);
   --accent: var(--core);
 }
-:root[data-theme="saber-red"]    { --blade: #ff2a2a; --core: #ff8080; --text: #ffe3e3; --accent-dim: #7a1515; --border: #5c1a1a; --danger: #ffa13c; }
-:root[data-theme="saber-blue"]   { --blade: #2a7bff; --core: #8cc0ff; --text: #e3eeff; --accent-dim: #1a3f7a; --border: #1d3560; }
-:root[data-theme="saber-green"]  { --blade: #2aff4a; --core: #96ff9f; --text: #e3ffe6; --accent-dim: #1a6b25; --border: #1d5224; }
-:root[data-theme="saber-purple"] { --blade: #b52aff; --core: #d79bff; --text: #f3e3ff; --accent-dim: #5a1a7a; --border: #44205c; }
+:root[data-theme="saber-red"]    { --blade: #ff1a1a; --core: #ff3d3d; --text: #ffc2c2; --accent-dim: #8a1010; --border: #6e1414; --danger: #ffa13c; }
+:root[data-theme="saber-blue"]   { --blade: #1a6bff; --core: #4a95ff; --text: #c2d9ff; --accent-dim: #12408f; --border: #173a78; }
+:root[data-theme="saber-green"]  { --blade: #14ff3c; --core: #3dff5e; --text: #c2ffcb; --accent-dim: #0f7a22; --border: #145e1f; }
+:root[data-theme="saber-purple"] { --blade: #a514ff; --core: #bb4dff; --text: #e5c2ff; --accent-dim: #5e138f; --border: #4a1870; }
 
 /* Starry sky behind the yellow and lightsaber themes (panels stay solid so text reads cleanly). */
 :root:not([data-theme]), :root[data-theme^="saber-"] { background: url(/stars.svg) var(--bg); background-attachment: fixed; }
