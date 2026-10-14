@@ -7,7 +7,7 @@ import { WotfPanel, WotfPicker, mercsChosen } from '../components/WillOfTheForce
 import { createBattle, normaliseCode, useMyBattles } from '../battles.js';
 import { RESULTS, SCENARIOS } from '../data/campaign.js';
 import { MERC_HIRE_COST, blankWotf, bonusCost, bonusCredits, bonusExp, countOf } from '../data/willOfTheForce.js';
-import { saveSquad, squadPoints, tempMerc, unitStats, unitsPoints, useMySquads, useSquad, withoutTemp } from '../squads.js';
+import { saveSquad, squadPoints, tempMerc, todoCount, unitStats, unitsPoints, useMySquads, useSquad, withoutTemp } from '../squads.js';
 
 export default function BattlePage() {
   return <SignInGate what="your battles"><Battle /></SignInGate>;
@@ -37,7 +37,9 @@ function BattleHome() {
   }
 
   const inBattle = (squads ?? []).filter(s => s.battle && !s.battle.battleId);
-  const free = (squads ?? []).filter(s => !s.battle && !s.backToShip);
+  const idle = (squads ?? []).filter(s => !s.battle && !s.backToShip);
+  const free = idle.filter(s => !todoCount(s));
+  const blocked = idle.filter(s => todoCount(s));
   return (
     <div className="stack">
       <div className="card stack">
@@ -60,6 +62,16 @@ function BattleHome() {
           </select>
         </div>
       )}
+
+      {blocked.map(s => (
+        <Link key={s.id} to={`/squads/${s.id}`} className="card link-card">
+          <div className="row between">
+            <strong>{s.name}</strong>
+            <span className="pill warn">{todoCount(s)} to-do{todoCount(s) > 1 ? 's' : ''}</span>
+          </div>
+          <div className="muted small">Finish its to-dos on the squad page before it can go into battle.</div>
+        </Link>
+      ))}
 
       {!!battles?.length && (
         <div className="stack">
@@ -104,6 +116,14 @@ function SquadBattle({ id }) {
   }
   if (squad.battle?.battleId) return <Navigate to={`/battle/game/${squad.battle.battleId}`} replace />;
   if (squad.battle) return <Tracker squad={squad} />;
+  if (todoCount(squad)) {
+    return (
+      <div className="card stack">
+        <p>{squad.name} has {todoCount(squad)} to-do{todoCount(squad) > 1 ? 's' : ''} to finish before it can go into battle.</p>
+        <Link className="btn" to={`/squads/${squad.id}`}>Go to the squad page</Link>
+      </div>
+    );
+  }
   return <StartBattle squad={squad} />;
 }
 

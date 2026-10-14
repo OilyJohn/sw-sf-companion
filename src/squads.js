@@ -51,6 +51,9 @@ export function createSquad(user, { name, faction }) {
   });
 }
 
+// Outstanding to-dos on living units; a squad can't go into battle until they're done.
+export const todoCount = squad => squad.units.filter(u => u.status !== 'dead').reduce((t, u) => t + (u.pending?.length ?? 0), 0);
+
 export const saveSquad = (id, patch) => updateDoc(doc(db, 'squads', id), { ...patch, updatedAt: serverTimestamp() });
 export const deleteSquad = id => deleteDoc(doc(db, 'squads', id));
 
