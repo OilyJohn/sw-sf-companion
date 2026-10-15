@@ -1,19 +1,31 @@
 import { useState } from 'react';
 import RollInput from './RollInput.jsx';
+import { rollFor } from '../dice.js';
 import { slotsOf } from '../data/equipment.js';
 import { CHOOSABLE_GEAR, X_WEAPONS, otherGearRow } from '../data/otherGear.js';
 import { gearRule } from '../ruleLookup.js';
 
 // Roll on the GH Other Gear table (2D10 read as 1-100), then the X Weapon D10 if needed, or pick
-// one on "Choose". onPick(name) adds the item. `free`: the gear takes no slots (Gadgeteer).
+// one on "Choose". 13-14 isn't on the table: an in-app roll quietly rolls again, and a typed
+// one asks for another real roll. onPick(name) adds the item. `free`: the gear takes no slots (Gadgeteer).
 export default function OtherGearRoll({ onPick, free = false, addLabel = 'Add' }) {
   const [roll, setRoll] = useState(null);
   const [irl, setIrl] = useState(false);
   const [xRoll, setXRoll] = useState(null);
   const [xIrl, setXIrl] = useState(false);
   const [chosen, setChosen] = useState('');
+  const [offTable, setOffTable] = useState(false);
   const row = roll === null ? null : otherGearRow(roll);
   const reset = () => { setRoll(null); setXRoll(null); setChosen(''); };
+  const onRoll = (n, typed) => {
+    if (!otherGearRow(n)) {
+      if (typed) return setOffTable(true);
+      do n = rollFor('D100'); while (!otherGearRow(n));
+    }
+    setOffTable(false);
+    setRoll(n);
+    setIrl(typed);
+  };
 
   let item = null;
   if (row?.name === 'X Weapon') item = xRoll === null ? null : X_WEAPONS[xRoll - 1].name;
@@ -23,15 +35,12 @@ export default function OtherGearRoll({ onPick, free = false, addLabel = 'Add' }
   return (
     <div className="stack">
       {roll === null
-        ? <RollInput dice="D100" min={1} max={100} label="Roll Other Gear" onRoll={(n, typed) => { setRoll(n); setIrl(typed); }} />
+        ? <>
+            {offTable && <div className="warn small">13-14 isn't on the table, so roll again.</div>}
+            <RollInput dice="D100" min={1} max={100} label="Roll Other Gear" onRoll={onRoll} />
+          </>
         : <div className="small muted">Rolled {roll} on Other Gear (GH){row ? `: ${row.name}` : ''}.
             {irl && <> <button className="link-btn small" onClick={reset}>change</button></>}</div>}
-      {roll !== null && !row && (
-        <div className="row gap wrap">
-          <span className="warn small">13-14 isn't on the table, so roll again.</span>
-          <button className="btn ghost" onClick={reset}>Re-roll</button>
-        </div>
-      )}
       {row?.name === 'X Weapon' && (xRoll === null
         ? <RollInput dice="D10" min={1} max={10} label="Roll X Weapon" onRoll={(n, typed) => { setXRoll(n); setXIrl(typed); }} />
         : <div className="small muted">X Weapon roll {xRoll}.

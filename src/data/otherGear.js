@@ -1,7 +1,7 @@
 // The Other Gear table from the Galactic Heroes 2nd Edition rulebook (GH pp. 46-48), rolled on
 // 2D10 read as 1-100 (00 = 100). Effects are short summaries in our own words; slot costs are
 // the book's. Used by Other Gear promotion rolls and by the Gadgeteer trait.
-// 13-14 isn't on the table, so it's rolled again.
+// 13-14 isn't on the table, so it's rolled again automatically (Alex).
 
 const g = (from, to, name, slots, text) => ({ from, to, name, slots, text });
 
