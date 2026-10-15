@@ -25,6 +25,8 @@ function Ship() {
   const { id } = useParams();
   const navigate = useNavigate();
   const squad = useSquad(id);
+  // The unit whose injury / promotion roll came last: only that roll offers a Will of the Force re-roll.
+  const [latest, setLatest] = useState({});
   if (squad === undefined) return <p className="muted">Loading…</p>;
   if (squad === null) return <p>Squad not found.</p>;
 
@@ -43,7 +45,7 @@ function Ship() {
   // Will of the Force re-rolls still unused (lost when Back to the Ship is finished).
   const rerolls = ship?.rerolls ?? {};
   const left = kind => Number(rerolls[kind] ?? 0);
-  const reroll = kind => left(kind) > 0 && { left: left(kind), use: () => saveSquad(squad.id, { [`backToShip.rerolls.${kind}`]: left(kind) - 1 }) };
+  const reroll = (kind, uid) => left(kind) > 0 && latest[kind] === uid && { left: left(kind), use: () => saveSquad(squad.id, { [`backToShip.rerolls.${kind}`]: left(kind) - 1 }) };
 
   return (
     <div className="stack">
@@ -60,7 +62,8 @@ function Ship() {
       <Section n={1} title="Injuries" done={!injuries.length}>
         {injuries.length === 0 && <p className="muted small">No injury rolls left.</p>}
         {injuries.map(u => (
-          <InjuryRoll key={u.id} unit={u} reroll={reroll('injury')} onApply={(patch, credits = 0) => updateUnit(u.id, patch, {
+          <InjuryRoll key={u.id} unit={u} reroll={reroll('injury', u.id)}
+            onRolled={() => setLatest(l => ({ ...l, injury: u.id }))} onApply={(patch, credits = 0) => updateUnit(u.id, patch, {
             credits: squad.credits + credits,
             backToShip: { ...ship, injuries: ship.injuries.filter(x => x !== u.id) },
           })} />
@@ -70,7 +73,8 @@ function Ship() {
       <Section n={2} title="Promotions" done={!promos.length}>
         {promos.length === 0 && <p className="muted small">Nobody has a full EXP box ({EXP_PER_PROMOTION} EXP) waiting.</p>}
         {promos.map(u => (
-          <PromotionRoll key={u.id} unit={u} squad={squad} reroll={reroll('promotion')}
+          <PromotionRoll key={u.id} unit={u} squad={squad} reroll={reroll('promotion', u.id)}
+            onRolled={() => setLatest(l => ({ ...l, promotion: u.id }))}
             onApply={patch => updateUnit(u.id, { ...patch, promotions: (u.promotions ?? 0) + 1 })} />
         ))}
         {promos.length > 0 && (
@@ -119,14 +123,14 @@ function Section({ n, title, done, children }) {
   );
 }
 
-// A Will of the Force re-roll, offered after an in-app or typed result until they're used up.
+// A Will of the Force re-roll, offered on the most recent injury / promotion result until they're used up.
 // reroll: { left, use } or false.
 function WotfReroll({ reroll, onUse }) {
   if (!reroll) return null;
   return <button className="btn ghost" onClick={() => { reroll.use(); onUse(); }}>Re-roll (Will of the Force, {reroll.left} left)</button>;
 }
 
-function InjuryRoll({ unit, onApply, reroll }) {
+function InjuryRoll({ unit, onApply, onRolled, reroll }) {
   const table = isHero(unit) ? HERO_INJURY : WARRIOR_INJURY;
   const [roll, setRoll] = useState(null);
   const [irl, setIrl] = useState(false);
@@ -145,7 +149,7 @@ function InjuryRoll({ unit, onApply, reroll }) {
     <div className="sub">
       <div className="row between"><strong>{unit.name}</strong><span className="muted small">{table.name} ({table.dice})</span></div>
       {res === null ? (
-        <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={(n, typed) => { setRoll(n); setIrl(typed); setPopup(true); }} />
+        <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={(n, typed) => { setRoll(n); setIrl(typed); setPopup(true); onRolled(); }} />
       ) : (
         <div className="stack">
           {popup && <ResultPopup heading={`${unit.name} rolled ${roll} on ${table.name}`} items={[{ title: res.name, text: res.text }]} onClose={() => setPopup(false)} />}
@@ -166,7 +170,7 @@ function InjuryRoll({ unit, onApply, reroll }) {
   );
 }
 
-function PromotionRoll({ unit, squad, onApply, reroll }) {
+function PromotionRoll({ unit, squad, onApply, onRolled, reroll }) {
   const force = FORCE_UNITS.has(unit.type);
   const table = isHero(unit)
     ? (force ? FORCE_HERO_PROMOTION : HERO_PROMOTION)
@@ -191,7 +195,7 @@ function PromotionRoll({ unit, squad, onApply, reroll }) {
         <span className="muted small">{unit.exp} EXP · {table.name}</span>
       </div>
       {rolled === null ? (
-        <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={(n, typed) => { setRoll(n); setIrl(typed); setPopup(true); }} />
+        <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={(n, typed) => { setRoll(n); setIrl(typed); setPopup(true); onRolled(); }} />
       ) : (
         <div className="stack">
           {popup && <ResultPopup heading={`${unit.name} rolled ${roll} on ${table.name}`} items={[{ title: rolled.name, text: rolled.text }]} onClose={() => setPopup(false)} />}
