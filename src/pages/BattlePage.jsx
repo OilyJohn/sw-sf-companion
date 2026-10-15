@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import ForcePowers from '../components/ForcePowers.jsx';
+import OtherGearRoll from '../components/OtherGearRoll.jsx';
 import RollInput from '../components/RollInput.jsx';
 import RuleLinks from '../components/RuleLinks.jsx';
 import SignInGate from '../components/SignInGate.jsx';
@@ -278,21 +279,11 @@ export function Tracker({ squad, shared = false }) {
 // Gadgeteer: rolls on the Other Gear table (GH rulebook) at the start of each game. The gear takes
 // no slots and is for this battle only: it's kept on the battle tracker, which is cleared at the end.
 function Gadget({ gear, onSet }) {
-  const [text, setText] = useState('');
-  if (gear) {
-    return (
-      <div className="row gap wrap">
-        <GadgetLine gear={gear} />
-        <button className="link-btn small" onClick={() => { setText(gear); onSet(null); }}>change</button>
-      </div>
-    );
-  }
+  if (gear) return <GadgetLine gear={gear} />;
   return (
     <div className="stack">
-      <label className="small">Gadgeteer: roll on the Other Gear table (GH rulebook) and enter what they got
-        <input value={text} placeholder="Other Gear for this battle" onChange={e => setText(e.target.value)} />
-      </label>
-      <button className="btn" disabled={!text.trim()} onClick={() => onSet(text.trim())}>Add for this battle</button>
+      <div className="small">Gadgeteer: roll for this battle's free Other Gear.</div>
+      <OtherGearRoll free addLabel="Take" onPick={onSet} />
     </div>
   );
 }

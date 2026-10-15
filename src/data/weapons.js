@@ -5,6 +5,8 @@
 // only names are short summaries, in our own words, of the Galactic Heroes 2nd Edition rulebook
 // ("GH p." = page numbers printed in the book). `aliases` are the names unit profiles use.
 
+import { OTHER_GEAR, X_WEAPONS } from './otherGear.js';
+
 const w = (name, range, notes, wound, extra = {}) => ({ name, range, notes, wound, ...extra });
 
 export const GEAR_GROUPS = [
@@ -62,6 +64,10 @@ export const GEAR_GROUPS = [
   { id: 'gear', name: 'Other Gear', sub: 'Galactic Heroes rulebook', items: [
     { name: 'Jet Pack', gh: true, text: 'Gives the Flier trait: moves over terrain in the way at no cost and can use a move to go straight up or down. Lands between moves.', ref: 'GH p.27' },
     { name: 'Ewok Glider', text: 'Works like a Jet Pack (Alex).' },
+    ...OTHER_GEAR.filter(r => r.name !== 'Jet Pack' && r.name !== 'Choose').map(r => ({
+      name: r.name, gh: true, text: `Other Gear roll ${r.from}-${r.to}. ${r.text}`, ref: 'GH pp. 46-48',
+      ...(r.name === 'X Weapon' ? { aliases: X_WEAPONS.map(x => x.name) } : {}),
+    })),
   ] },
 ];
 

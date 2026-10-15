@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import EquipmentPicker from './EquipmentPicker.jsx';
 import ExpShift from './ExpShift.jsx';
+import OtherGearRoll from './OtherGearRoll.jsx';
 import ResultPopup from './ResultPopup.jsx';
 import RollInput from './RollInput.jsx';
+import { slotsUsed } from '../data/equipment.js';
 import { findTrait } from '../data/traits.js';
 import {
   LEVELS, LIGHTSABER_FORMS, choosable, diceRange, formLevel, parseFormTrait, rollTraitTable, todoSpec, traitTable,
@@ -106,17 +108,22 @@ function TraitPicker({ traits, has, onPick }) {
   );
 }
 
-function GearTask({ unit, onDone }) {
-  const [gear, setGear] = useState('');
+function GearTask({ unit, squad, onDone }) {
+  const st = unitStats(unit, squad.faction);
+  const [over, setOver] = useState(null);
+  const add = item => {
+    const equipment = [...(unit.equipment ?? []), item];
+    const extra = st ? slotsUsed(equipment) - st.eqSlots : 0;
+    if (extra > 0 && over !== item) return setOver(item);
+    onDone({ equipment });
+  };
   return (
     <div className="stack">
-      <label className="small">Other Gear roll (table is in the GH rulebook)
-        <input value={gear} placeholder="What did they get?" onChange={e => setGear(e.target.value)} />
-      </label>
-      <div className="row gap wrap">
-        <button className="btn" disabled={!gear.trim()} onClick={() => onDone({ equipment: [...(unit.equipment ?? []), gear.trim()] })}>Add gear</button>
-        <button className="btn ghost" onClick={() => onDone(addTraits(unit, { name: 'Force Sensitive', pts: 0 }))}>Become force sensitive</button>
-      </div>
+      <OtherGearRoll onPick={add} />
+      {over && (
+        <div className="warn small">{over} would put {unit.name} over its {st.eqSlots} slots. Tap Add again to take it anyway, then move gear to the Armoury on the squad page.</div>
+      )}
+      <button className="btn ghost" onClick={() => onDone(addTraits(unit, { name: 'Force Sensitive', pts: 0 }))}>Become force sensitive instead</button>
       <div className="muted small">Force sensitive: replace any ranged/melee weapons with a lightsaber on the squad page.</div>
     </div>
   );
