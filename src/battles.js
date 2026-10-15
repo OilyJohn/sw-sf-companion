@@ -153,7 +153,7 @@ export function wotfLobby(b) {
   }));
   return {
     teams: Object.fromEntries(teams.map(t => [t.id, t.players.reduce((n, p) => n + p.points, 0)])),
-    players: wotfShares(teams),
+    players: wotfShares(teams, b.id),
   };
 }
 
@@ -288,13 +288,38 @@ export const answerEnd = (code, uid, agree) => change(code, b => {
   if (!agree) return { endProposal: null };
   const confirms = { ...b.endProposal.confirms, [uid]: true };
   if (b.memberIds.every(id => confirms[id])) {
-    return { endProposal: { ...b.endProposal, confirms }, status: 'ended', results: b.endProposal.results, endedAt: Date.now() };
+    return {
+      endProposal: { ...b.endProposal, confirms }, status: 'ended', results: b.endProposal.results, endedAt: Date.now(),
+      mvpPickers: assignMvpPickers(b),
+    };
   }
   return { endProposal: { ...b.endProposal, confirms } };
 });
 
-// MVP: once the battle is over, each squad's MVP (a non-hero) is picked by its opponents.
-// mvps[squadId] is a unit id, or NO_MVP.
+// MVP: once the battle is over, each squad gets one MVP (a non-hero), picked by one opposing team.
+// mvpPickers[squadId] is that team's id, chosen at random but spread as evenly as possible
+// across the teams. Any player on the picking team can set it. mvps[squadId] is a unit id, or NO_MVP.
+// Battles that ended before mvpPickers existed let any opponent pick.
+function assignMvpPickers(b) {
+  const squads = Object.values(b.players).filter(p => p.squadId);
+  for (let i = squads.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [squads[i], squads[j]] = [squads[j], squads[i]];
+  }
+  const load = Object.fromEntries(b.teams.map(t => [t.id, 0]));
+  const pickers = {};
+  squads.forEach(p => {
+    const opp = b.teams.filter(t => t.id !== p.team && t.id in load);
+    if (!opp.length) return;
+    const least = Math.min(...opp.map(t => load[t.id]));
+    const options = opp.filter(t => load[t.id] === least);
+    const team = options[Math.floor(Math.random() * options.length)].id;
+    load[team]++;
+    pickers[p.squadId] = team;
+  });
+  return pickers;
+}
+export const picksMvpFor = (b, squadId, teamId) => (b.mvpPickers?.[squadId] ?? teamId) === teamId;
 export const NO_MVP = '__none';
 export const setMvp = (code, squadId, unitId) => change(code, b => (b.status === 'ended' ? { [`mvps.${squadId}`]: unitId } : null));
 export const mvpCandidates = units => units.filter(u => u.role === 'regular' && !u.temp);

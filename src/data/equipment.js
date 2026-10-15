@@ -1,8 +1,11 @@
 // Equipment slot sizes, keyed by the names used in factions.js.
 // From "SW_SF Weapons" unless noted. Aliases from the Factions doc: Wrist Rocket = Thermal
 // Detonator, Wrist Cannons = Blaster Rifle, Bayonet = Combat Knife. Club = Blunt Weapon.
-// GH = Galactic Heroes rulebook (armour, shields, spear, jet pack).
+// GH = Galactic Heroes rulebook (armour, shields, spear, jet pack, and the Other Gear table).
+import { OTHER_GEAR_SLOTS } from './otherGear.js';
+
 export const EQUIPMENT_SLOTS = {
+  ...OTHER_GEAR_SLOTS,
   'Combat Knife': 1,
   'Bayonet': 1,
   'Axe': 1,

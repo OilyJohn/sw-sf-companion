@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import ForcePowers from '../components/ForcePowers.jsx';
+import OtherGearRoll from '../components/OtherGearRoll.jsx';
 import RollInput from '../components/RollInput.jsx';
 import RuleLinks from '../components/RuleLinks.jsx';
 import SignInGate from '../components/SignInGate.jsx';
@@ -253,6 +254,7 @@ export function Tracker({ squad, shared = false }) {
               <RuleLinks label="Traits" kind="trait" names={st.traits} />
               <RuleLinks label="Gear" kind="gear" names={u.equipment ?? []} />
               <ForcePowers unit={u} traits={st.traits} />
+              {st.traits.includes('Gadgeteer') && <Gadget gear={t.gadget} onSet={g => update(u.id, { gadget: g })} />}
             </>}
             <Counter label="Wounds inflicted" value={t.wounds} onChange={v => update(u.id, { wounds: v })} />
             <Counter label="Enemy heroes defeated" value={t.heroKills} onChange={v => update(u.id, { heroKills: v })} />
@@ -274,6 +276,20 @@ export function Tracker({ squad, shared = false }) {
   );
 }
 
+// Gadgeteer: rolls on the Other Gear table (GH rulebook) at the start of each game. The gear takes
+// no slots and is for this battle only: it's kept on the battle tracker, which is cleared at the end.
+function Gadget({ gear, onSet }) {
+  if (gear) return <GadgetLine gear={gear} />;
+  return (
+    <div className="stack">
+      <div className="small">Gadgeteer: roll for this battle's free Other Gear.</div>
+      <OtherGearRoll free addLabel="Take" onPick={onSet} />
+    </div>
+  );
+}
+
+export const GadgetLine = ({ gear }) => <RuleLinks label="Gadgeteer gear (this battle, 0 slots)" kind="gear" names={[gear]} />;
+
 export function Counter({ label, value, onChange, max = Infinity }) {
   return (
     <div className="counter">
@@ -293,8 +309,9 @@ const battleExp = (t, mvp = false) => 1 + (t.wounds > 0 ? 1 : 0) + t.heroKills +
 
 // `fixedResult`: the result every player agreed in a shared battle.
 // `mvpPick`: in a shared battle, the MVP the opponents picked (undefined while they haven't);
-// `mvpsPicked`: whether this player has picked an MVP for every opposing squad.
-export function EndBattle({ squad, onBack, fixedResult = null, mvpPick, mvpsPicked = true }) {
+// `mvpsPicked`: whether this player's team has picked an MVP for every squad it was given;
+// `mvpPicker`: the name of the team picking this squad's MVP.
+export function EndBattle({ squad, onBack, fixedResult = null, mvpPick, mvpsPicked = true, mvpPicker }) {
   const navigate = useNavigate();
   const { battle } = squad;
   const wotf = battle.wotf;
@@ -382,9 +399,9 @@ export function EndBattle({ squad, onBack, fixedResult = null, mvpPick, mvpsPick
 
       {shared ? (
         <div className="card stack">
-          <div className="nav-heading">Your MVP (chosen by your opponents)</div>
+          <div className="nav-heading">Your MVP (chosen by {mvpPicker ?? 'your opponents'})</div>
           {!mvpCandidates.length ? <div className="muted small">No non-heroes took part, so no MVP.</div>
-            : waitingMvp ? <div className="muted small">Waiting for your opponents to pick.</div>
+            : waitingMvp ? <div className="muted small">Waiting for {mvpPicker ?? 'your opponents'} to pick.</div>
             : <div className="small">{units.find(u => u.id === mvp)?.name ?? 'No MVP'}</div>}
         </div>
       ) : (
@@ -413,7 +430,7 @@ export function EndBattle({ squad, onBack, fixedResult = null, mvpPick, mvpsPick
         ))}
       </div>
 
-      {shared && !mvpsPicked && <div className="warn small">Pick an MVP for each opposing squad first.</div>}
+      {shared && !mvpsPicked && <div className="warn small">Pick an MVP for each squad your team was given first.</div>}
       <button className="btn wide" disabled={credits === null || waitingMvp || !mvpsPicked} onClick={finish}>Record result and go Back to the Ship</button>
       {onBack && <button className="btn ghost wide" onClick={onBack}>Back to tracker</button>}
     </div>
