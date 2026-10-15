@@ -35,8 +35,10 @@ export const blankWotf = (gap, bonuses = [], mercIds = []) => ({ gap, bonuses, u
 // players per team. It's split between the team's players by how far each one's points fall
 // short of the strongest team's per-player average, so the weaker player gets more.
 // The gap is rounded down to a multiple of the cheapest bonus.
+// When two players are owed the same, the spare step goes to one picked at random; `seed`
+// (the battle code) keeps that pick the same every time it's worked out for one battle.
 // teams: [{ id, players: [{ uid, points }] }]; returns { [uid]: { teamGap, share } }.
-export function wotfShares(teams) {
+export function wotfShares(teams, seed = '') {
   const total = teams.reduce((n, t) => n + t.players.length, 0);
   const avg = teams.length ? total / teams.length : 1;
   const sum = t => t.players.reduce((n, p) => n + p.points, 0);
@@ -54,10 +56,18 @@ export function wotfShares(teams) {
     const exact = t.players.map((_, i) => steps * (shortSum ? short[i] / shortSum : 1 / t.players.length));
     const given = exact.map(Math.floor);
     let left = steps - given.reduce((a, b) => a + b, 0);
-    exact.map((x, i) => [x - given[i], i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (left > 0) { given[i]++; left--; } });
+    const tiebreak = i => hash(seed + t.players[i].uid);
+    exact.map((x, i) => [x - given[i], i]).sort((a, b) => b[0] - a[0] || tiebreak(a[1]) - tiebreak(b[1])).forEach(([, i]) => { if (left > 0) { given[i]++; left--; } });
     t.players.forEach((p, i) => {
       out[p.uid] = { teamGap: steps * MIN_GAP, share: given[i] * MIN_GAP };
     });
   });
   return out;
+}
+
+// Small string hash (FNV-1a), used as a repeatable coin flip.
+function hash(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+  return h >>> 0;
 }

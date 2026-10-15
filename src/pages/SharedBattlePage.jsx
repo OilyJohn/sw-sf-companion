@@ -9,14 +9,14 @@ import UnitProfile from '../components/UnitProfile.jsx';
 import { WotfPicker } from '../components/WillOfTheForce.jsx';
 import {
   NO_MVP, abandonBattle, addTeam, agreedScenario, answerEnd, endTurn, joinBattle, leaveBattle, proposeEnd, removeTeam, ROLL,
-  mvpCandidates, setFlag, setMvp, setPlayer, setReady, setRolled, setScore, setTargetWounds, setTeamRole, shareLink, startProblems,
+  mvpCandidates, picksMvpFor, setFlag, setMvp, setPlayer, setReady, setRolled, setScore, setTargetWounds, setTeamRole, shareLink, startProblems,
   teamStates, useBattle, vote, wotfLobby,
 } from '../battles.js';
 import { RESULTS, SCENARIOS } from '../data/campaign.js';
 import { rulesFor } from '../data/scenarioRules.js';
 import { blankWotf } from '../data/willOfTheForce.js';
 import { saveSquad, squadPoints, tempMerc, todoCount, unitStats, unitsPoints, useMySquads, useSquadsById, withoutTemp } from '../squads.js';
-import { blankTrack, Counter, EndBattle, Tracker } from './BattlePage.jsx';
+import { blankTrack, Counter, EndBattle, GadgetLine, Tracker } from './BattlePage.jsx';
 
 export default function SharedBattlePage() {
   return <SignInGate what="this battle"><SharedBattle /></SignInGate>;
@@ -72,12 +72,14 @@ function SharedBattle() {
     const result = battle.results[me.team];
     const opponents = opposingSquads(battle, squads, user.uid);
     const mvpsPicked = opponents.every(o => !o.candidates.length || battle.mvps?.[o.squad.id]);
+    const pickerTeam = mySquad && battle.teams.find(t => t.id === battle.mvpPickers?.[mySquad.id]);
     return (
       <div className="stack">
         <Outcome battle={battle} teams={teams} heading="Battle over" />
         <PickMvps battle={battle} opponents={opponents} />
         {mySquad?.battle?.battleId === battle.id
-          ? <EndBattle squad={mySquad} fixedResult={result} mvpPick={battle.mvps?.[mySquad.id]} mvpsPicked={mvpsPicked} />
+          ? <EndBattle squad={mySquad} fixedResult={result} mvpPick={battle.mvps?.[mySquad.id]} mvpsPicked={mvpsPicked}
+              mvpPicker={pickerTeam?.name} />
           : <div className="card stack">
               <p className="small">Your result is recorded.</p>
               {me.squadId && <Link className="btn" to={`/squads/${me.squadId}/ship`}>Back to the Ship</Link>}
@@ -97,11 +99,11 @@ function SharedBattle() {
   );
 }
 
-// Each opposing squad in the battle, with the non-heroes who can be its MVP.
+// Each opposing squad whose MVP this player's team picks, with the non-heroes who can be its MVP.
 function opposingSquads(battle, squads, uid) {
   const me = battle.players[uid];
   return Object.values(battle.players)
-    .filter(p => p.team !== me.team && squads[p.squadId])
+    .filter(p => p.team !== me.team && squads[p.squadId] && picksMvpFor(battle, p.squadId, me.team))
     .map(p => {
       const squad = squads[p.squadId];
       const units = (p.units ?? []).map(id => squad.units.find(u => u.id === id)).filter(Boolean);
@@ -109,13 +111,13 @@ function opposingSquads(battle, squads, uid) {
     });
 }
 
-// You pick the MVP for your opponents' squads; any opponent of a squad can set or change it.
+// Your team picks the MVP for the opposing squads it was given; anyone on the team can set or change it.
 function PickMvps({ battle, opponents }) {
   const shown = opponents.filter(o => o.candidates.length);
   if (!shown.length) return null;
   return (
     <div className="card stack">
-      <div className="nav-heading">Pick your opponents' MVP (non-heroes only)</div>
+      <div className="nav-heading">Your team picks the MVP for (non-heroes only)</div>
       {shown.map(({ player, squad, candidates }) => {
         const tracked = squad.battle?.battleId === battle.id ? squad.battle.units : null;
         return (
@@ -362,14 +364,14 @@ function OtherSquads({ battle, squads, uid }) {
           <span className="pill">{units.filter(u => !tracked[u.id]?.ooa).length}/{units.length} in action</span>
         </summary>
         {!squad && <p className="muted small">Loading squad…</p>}
-        {units.map(u => <OtherUnit key={u.id} unit={u} faction={squad.faction} ooa={tracked[u.id]?.ooa} />)}
+        {units.map(u => <OtherUnit key={u.id} unit={u} faction={squad.faction} ooa={tracked[u.id]?.ooa} gadget={tracked[u.id]?.gadget} />)}
       </details>
     );
   });
 }
 
 // One of their units: a summary line that taps open to the full profile.
-function OtherUnit({ unit: u, faction, ooa }) {
+function OtherUnit({ unit: u, faction, ooa, gadget }) {
   const [open, setOpen] = useState(false);
   const st = unitStats(u, faction);
   return (
@@ -393,6 +395,7 @@ function OtherUnit({ unit: u, faction, ooa }) {
             <RuleLinks label="Gear" kind="gear" names={u.equipment ?? []} />
             <ForcePowers unit={u} traits={st.traits} />
           </>)}
+      {gadget && <GadgetLine gear={gadget} />}
     </div>
   );
 }
