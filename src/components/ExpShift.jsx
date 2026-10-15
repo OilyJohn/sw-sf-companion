@@ -6,8 +6,10 @@ export default function ExpShift({ shift, max, canUp, canDown, onShift }) {
   return (
     <div className="row gap wrap small">
       <span className="muted">Excess EXP ({spent}/{max} spent):</span>
-      <button className="btn ghost small-btn" disabled={!canDown || (shift <= 0 && spent >= max)} onClick={() => onShift(shift - 1)}>Result down</button>
-      <button className="btn ghost small-btn" disabled={!canUp || (shift >= 0 && spent >= max)} onClick={() => onShift(shift + 1)}>Result up</button>
+      <div className="row gap">
+        <button className="btn ghost small-btn" disabled={!canDown || (shift <= 0 && spent >= max)} onClick={() => onShift(shift - 1)}>Result down</button>
+        <button className="btn ghost small-btn" disabled={!canUp || (shift >= 0 && spent >= max)} onClick={() => onShift(shift + 1)}>Result up</button>
+      </div>
     </div>
   );
 }
