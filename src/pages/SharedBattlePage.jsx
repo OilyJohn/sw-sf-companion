@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../auth.jsx';
 import ForcePowers from '../components/ForcePowers.jsx';
 import RollInput from '../components/RollInput.jsx';
@@ -462,7 +463,7 @@ function BattlePanel({ battle, teams, squads, uid }) {
 function CallBattle({ battle, teams, uid, onClose }) {
   const [results, setResults] = useState(() => Object.fromEntries(teams.map(t => [t.id, null])));
   const done = Object.values(results).every(Boolean);
-  return (
+  return createPortal(
     <div className="popup-backdrop" onClick={onClose}>
       <div className="popup card stack" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         <h2>End the battle</h2>
@@ -480,7 +481,8 @@ function CallBattle({ battle, teams, uid, onClose }) {
         <button className="btn" disabled={!done} onClick={() => { proposeEnd(battle.id, uid, results).catch(fail); onClose(); }}>Ask everyone to confirm</button>
         <button className="btn ghost" onClick={onClose}>Cancel</button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -504,7 +506,7 @@ function Outcome({ battle, teams, heading, children, className = 'card stack' })
 function EndProposal({ battle, teams, uid }) {
   const { confirms } = battle.endProposal;
   const waiting = battle.memberIds.filter(id => !confirms[id]).map(id => battle.players[id]?.name);
-  return (
+  return createPortal(
     <div className="popup-backdrop">
       <div role="dialog" aria-modal="true" style={{ width: '100%', display: 'grid', justifyItems: 'center' }}>
         <Outcome battle={battle} teams={teams} heading="Battle over?" className="popup card stack">
@@ -517,6 +519,7 @@ function EndProposal({ battle, teams, uid }) {
           <button className="btn ghost" onClick={() => answerEnd(battle.id, uid, false).catch(fail)}>Not over, keep playing</button>
         </Outcome>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
