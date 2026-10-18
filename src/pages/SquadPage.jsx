@@ -10,7 +10,7 @@ import { TraitList } from '../components/UnitProfile.jsx';
 import { MAX_FORCE_WIELDERS, MAX_HEROES } from '../data/factions.js';
 import { GEAR_COST_PER_SLOT, slotsOf, slotsUsed } from '../data/equipment.js';
 import { FORCE_WIELDERS, ROLE_BONUS, findProfile, getFaction } from '../data/rules.js';
-import { buyableGear } from '../gear.js';
+import { buyableGear, purchasableGear } from '../gear.js';
 import { deleteSquad, newUnit, saveSquad, squadPoints, unitStats, useSquad } from '../squads.js';
 
 export default function SquadPage() {
@@ -373,7 +373,7 @@ function BuyGear({ squad, onBuy }) {
   const [item, setItem] = useState('');
   const unit = units.find(u => u.id === unitId);
   const st = unit && unitStats(unit, squad.faction);
-  const options = st ? buyableGear(unit, st) : [];
+  const options = st ? purchasableGear(unit, st) : [];
   const cost = unit && item ? gearCost(unit, item) : 0;
   const tooBig = unit && item && !fits(unit, st, item);
   const tooDear = cost > squad.credits;
