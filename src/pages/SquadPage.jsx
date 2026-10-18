@@ -39,6 +39,8 @@ function Squad() {
   const navigate = useNavigate();
   const squad = useSquad(id);
   const [adding, setAdding] = useState(false);
+  // The last gear moved to the armoury, so a mis-tap can be put back. Any other change clears it.
+  const [lastStash, setLastStash] = useState(null);
 
   if (squad === undefined) return <p className="muted">Loading…</p>;
   if (squad === null) return <p>Squad not found. <Link to="/squads">Back to squads</Link></p>;
@@ -51,7 +53,7 @@ function Squad() {
   const hasLeader = active.some(isLeader);
 
   const armoury = squad.armoury ?? [];
-  const save = patch => saveSquad(squad.id, patch);
+  const save = patch => { setLastStash(null); return saveSquad(squad.id, patch); };
   const updateUnit = (unitId, patch, extra = {}) =>
     save({ units: squad.units.map(u => (u.id === unitId ? { ...u, ...patch } : u)), ...extra });
 
@@ -79,6 +81,17 @@ function Squad() {
     save({
       armoury: [...armoury, unit.equipment[i]],
       units: squad.units.map(u => (u.id === unit.id ? { ...u, equipment: without(u.equipment, i) } : u)),
+    });
+    setLastStash({ unitId: unit.id, item: unit.equipment[i], index: i });
+  }
+
+  // Puts the item back where it was on the same unit, since heroes can't take from the armoury.
+  function undoStash() {
+    const { unitId, item, index } = lastStash;
+    if (!armoury.includes(item)) return setLastStash(null);
+    save({
+      armoury: removeOne(armoury, item),
+      units: squad.units.map(u => (u.id === unitId ? { ...u, equipment: [...(u.equipment ?? []).slice(0, index), item, ...(u.equipment ?? []).slice(index)] } : u)),
     });
   }
 
@@ -155,6 +168,8 @@ function Squad() {
             onEquip={items => setEquipment(unit, items)}
             onStash={i => stashGear(unit, i)}
             onTake={item => takeGear(unit, item)}
+            undoItem={lastStash?.unitId === unit.id ? lastStash.item : null}
+            onUndo={undoStash}
             onRemove={() => remove(unit)} />
         ))}
       </div>
@@ -200,7 +215,7 @@ function Stat({ label, value }) {
   return <div className="stat"><div className="stat-value">{value}</div><div className="stat-label">{label}</div></div>;
 }
 
-function UnitCard({ unit, squad, mine, onChange, onRole, canSucceed, onSucceed, onEquip, onStash, onTake, onRemove }) {
+function UnitCard({ unit, squad, mine, onChange, onRole, canSucceed, onSucceed, onEquip, onStash, onTake, undoItem, onUndo, onRemove }) {
   const [open, setOpen] = useState(false);
   const st = unitStats(unit, squad.faction);
   if (!st) return <div className="card warn">Unknown unit type: {unit.type}</div>;
@@ -255,7 +270,7 @@ function UnitCard({ unit, squad, mine, onChange, onRole, canSucceed, onSucceed, 
               </button>
             )}
             {squad.started
-              ? <GearSwap unit={unit} st={st} armoury={squad.armoury ?? []} onStash={onStash} onTake={onTake} />
+              ? <GearSwap unit={unit} st={st} armoury={squad.armoury ?? []} onStash={onStash} onTake={onTake} undoItem={undoItem} onUndo={onUndo} />
               : (
                 <details>
                   <summary className="small">Change equipment</summary>
@@ -340,7 +355,7 @@ const allowedGear = (unit, st) => [...new Set([
 
 const countItems = items => [...items.reduce((m, g) => m.set(g, (m.get(g) ?? 0) + 1), new Map())];
 
-function GearSwap({ unit, st, armoury, onStash, onTake }) {
+function GearSwap({ unit, st, armoury, onStash, onTake, undoItem, onUndo }) {
   const equipment = unit.equipment ?? [];
   const allowed = new Set(buyableGear(unit, st));
   const takeable = isHero(unit) ? [] : [...new Set(armoury)].filter(g => allowed.has(g));
@@ -349,6 +364,12 @@ function GearSwap({ unit, st, armoury, onStash, onTake }) {
       <summary className="small">Change equipment</summary>
       <div className="equip-picker">
         <div className="muted small">Slots used {slotsUsed(equipment)}/{st.eqSlots}. Removed gear goes to the armoury.</div>
+        {undoItem && (
+          <div className="counter">
+            <span className="small">{undoItem} moved to the armoury.</span>
+            <button type="button" className="btn small-btn" onClick={onUndo}>Undo</button>
+          </div>
+        )}
         {equipment.map((g, i) => (
           <div key={i + g} className="counter">
             <span className="small">{g} <span className="muted">({slotsOf(g)})</span></span>
