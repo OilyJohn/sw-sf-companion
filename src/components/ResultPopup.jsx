@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 // Pops up after a roll lands, showing the full text of what was rolled.
 // items: [{ title, text }]; tap OK, the backdrop or Escape to close.
@@ -8,7 +9,8 @@ export default function ResultPopup({ heading, items, onClose }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-  return (
+  // Portalled to the page body so it covers the whole screen, not just the clipped card it was opened from.
+  return createPortal(
     <div className="popup-backdrop" onClick={onClose}>
       <div className="popup card stack" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         <div className="muted small">{heading}</div>
@@ -20,6 +22,7 @@ export default function ResultPopup({ heading, items, onClose }) {
         ))}
         <button className="btn" autoFocus onClick={onClose}>OK</button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
