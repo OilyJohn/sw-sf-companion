@@ -21,8 +21,12 @@ export function rollTraitTable(table, n) {
   });
 }
 
-// Rows a player can pick when told to choose (everything except "Choose any of the above").
-export const choosable = table => table.traits.filter(tr => tr.pts !== null);
+// Rows a player can pick when told to choose: only results above "Choose any of the above"
+// (e.g. Ranged Fighter on 99 can't be picked from a 90-98 roll).
+export function choosable(table) {
+  const stop = table.traits.findIndex(tr => tr.pts === null);
+  return stop < 0 ? table.traits : table.traits.slice(0, stop);
+}
 
 // "Fancy Footwork (2)" -> { name: 'Fancy Footwork', pts: 2 }
 export function parseFormTrait(s) {
