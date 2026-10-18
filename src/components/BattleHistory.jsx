@@ -38,6 +38,7 @@ export default function BattleHistory({ history, units }) {
               {h.credits !== null && h.credits !== undefined && <div><span className="muted">Credits earned: </span>{h.credits}</div>}
               {h.mvp && <div><span className="muted">MVP: </span>{nameOf(h.mvp)}</div>}
               {h.wotf?.length > 0 && <div><span className="muted">Will of the Force: </span>{h.wotf.map(id => findBonus(id)?.name ?? id).join(', ')}</div>}
+              {h.bounties?.length > 0 && <div><span className="muted">Bounties claimed: </span>{h.bounties.map(b => `${nameOf(b.unit)}${b.target ? ` (${b.target})` : ''}`).join(', ')}</div>}
               {h.outOfAction?.length > 0 && <div><span className="muted">Out of action: </span>{h.outOfAction.map(nameOf).join(', ')}</div>}
               {h.exp && Object.keys(h.exp).length > 0 && (
                 <div><span className="muted">EXP: </span>{Object.entries(h.exp).map(([id, n]) => `${nameOf(id)} +${n}`).join(', ')}</div>
