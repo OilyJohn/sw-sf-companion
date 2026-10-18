@@ -255,6 +255,7 @@ export function Tracker({ squad, shared = false }) {
               <RuleLinks label="Gear" kind="gear" names={u.equipment ?? []} />
               <ForcePowers unit={u} traits={st.traits} />
               {st.traits.includes('Gadgeteer') && <Gadget gear={t.gadget} onSet={g => update(u.id, { gadget: g })} />}
+              {st.traits.includes('Bounty Hunter') && <Bounty track={t} onSet={patch => update(u.id, patch)} />}
             </>}
             <Counter label="Wounds inflicted" value={t.wounds} onChange={v => update(u.id, { wounds: v })} />
             <Counter label="Enemy heroes defeated" value={t.heroKills} onChange={v => update(u.id, { heroKills: v })} />
@@ -284,6 +285,25 @@ function Gadget({ gear, onSet }) {
     <div className="stack">
       <div className="small">Gadgeteer: roll for this battle's free Other Gear.</div>
       <OtherGearRoll free addLabel="Take" onPick={onSet} />
+    </div>
+  );
+}
+
+// Bounty Hunter: picks 1 enemy at the start of the game, and gains BOUNTY_CREDITS for landing
+// the wound that puts that enemy out of action. The name is saved when the box loses focus.
+export const BOUNTY_CREDITS = 2;
+
+function Bounty({ track, onSet }) {
+  return (
+    <div className="stack">
+      <label className="small">Bounty target
+        <input type="text" placeholder="Enemy unit's name" defaultValue={track.bounty ?? ''}
+          onBlur={e => e.target.value.trim() !== (track.bounty ?? '') && onSet({ bounty: e.target.value.trim() })} />
+      </label>
+      <label className="check">
+        <input type="checkbox" checked={!!track.bountyDone} onChange={e => onSet({ bountyDone: e.target.checked })} />
+        <span className="small">Put the target out of action (+{BOUNTY_CREDITS} credits)</span>
+      </label>
     </div>
   );
 }
@@ -328,7 +348,10 @@ export function EndBattle({ squad, onBack, fixedResult = null, mvpPick, mvpsPick
   const waitingMvp = shared && mvpCandidates.length > 0 && mvpPick === undefined;
   const extraCredits = result ? bonusCredits(wotf?.bonuses, result) : 0;
   const extraExp = result ? bonusExp(wotf?.bonuses, result) : 0;
-  const credits = result && creditRoll !== null ? creditRoll + RESULTS[result].credits + extraCredits : null;
+  // Only Bounty Hunters get the tick box on the tracker.
+  const bounties = units.filter(u => battle.units[u.id].bountyDone);
+  const bountyCredits = bounties.length * BOUNTY_CREDITS;
+  const credits = result && creditRoll !== null ? creditRoll + RESULTS[result].credits + extraCredits + bountyCredits : null;
   const funds = credits === null ? null : squad.credits + credits - hire.size * MERC_HIRE_COST;
   const toggleHire = id => setHire(h => { const n = new Set(h); n.has(id) ? n.delete(id) : n.add(id); return n; });
   // A Mercenary who isn't hired leaves with no EXP or injury roll.
@@ -356,6 +379,7 @@ export function EndBattle({ squad, onBack, fixedResult = null, mvpPick, mvpsPick
         ...(battle.battleId ? { battleId: battle.battleId } : {}),
         ...(battle.test ? { test: true } : {}),
         ...(wotf ? { wotf: wotf.bonuses } : {}),
+        ...(bounties.length ? { bounties: bounties.map(u => ({ unit: u.id, target: battle.units[u.id].bounty ?? '' })) } : {}),
         result, credits, mvp: mvp || null, exp: expGained, outOfAction: injuries,
       }],
     });
@@ -375,10 +399,13 @@ export function EndBattle({ squad, onBack, fixedResult = null, mvpPick, mvpsPick
         )}
         {result && (
           <>
-            <div className="small">Credits: D8 + {RESULTS[result].credits}{extraCredits ? ` + ${extraCredits} (Will of the Force)` : ''}</div>
+            <div className="small">Credits: D8 + {RESULTS[result].credits}{extraCredits ? ` + ${extraCredits} (Will of the Force)` : ''}{bountyCredits ? ` + ${bountyCredits} (bounty)` : ''}</div>
+            {bounties.map(u => (
+              <div key={u.id} className="muted small">{u.name} claimed the bounty{battle.units[u.id].bounty ? ` on ${battle.units[u.id].bounty}` : ''}: +{BOUNTY_CREDITS}</div>
+            ))}
             {creditRoll === null
               ? <RollInput dice="D8" min={1} max={8} onRoll={(n, irl) => { setCreditRoll(n); setCreditIrl(irl); }} />
-              : <div>Rolled {creditRoll} + {RESULTS[result].credits}{extraCredits ? ` + ${extraCredits}` : ''} = <b>{credits} credits</b>
+              : <div>Rolled {creditRoll} + {RESULTS[result].credits}{extraCredits ? ` + ${extraCredits}` : ''}{bountyCredits ? ` + ${bountyCredits}` : ''} = <b>{credits} credits</b>
                   {creditIrl && <> <button className="link-btn small" onClick={() => setCreditRoll(null)}>change</button></>}</div>}
           </>
         )}
