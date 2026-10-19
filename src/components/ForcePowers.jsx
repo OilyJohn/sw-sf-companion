@@ -1,3 +1,4 @@
+import { RuleText } from './RuleLinks.jsx';
 import { FORCE_UNITS } from '../data/rules.js';
 import { LIGHTSABER_FORMS, findTrait } from '../data/traits.js';
 
@@ -20,7 +21,7 @@ export default function ForcePowers({ unit, traits, open = false }) {
         {powers.map(tr => (
           <div key={tr.name} className="trait">
             <b className="small">{tr.name}</b>
-            <div className="small">{tr.text}</div>
+            <div className="small"><RuleText text={tr.text} /></div>
           </div>
         ))}
         {forms.map(({ form, level }) => (

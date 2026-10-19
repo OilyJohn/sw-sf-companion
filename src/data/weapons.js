@@ -4,6 +4,7 @@
 // Gear the Weapons doc doesn't cover (armour, shields, spear, jet pack) and the properties it
 // only names are short summaries, in our own words, of the Galactic Heroes 2nd Edition rulebook
 // ("GH p." = page numbers printed in the book). `aliases` are the names unit profiles use.
+// `link: true` properties are tappable wherever trait text names them (Splash: Force Lightning).
 
 import { OTHER_GEAR, X_WEAPONS } from './otherGear.js';
 
@@ -82,4 +83,5 @@ export const PROPERTIES = [
   { name: 'Limited Ammo', text: 'Once Out of Ammo, it stays out for the rest of the game.', ref: 'GH p.45' },
   { name: 'Polearm', text: 'Attacks from 2" instead of 1", and gets +1 in CC when charged. Can\'t be used with a shield.', ref: 'GH pp. 39, 45' },
   { name: 'Specialist', text: 'Only Specialists and Leaders can use it. In this campaign heroes need the Weapons Specialist trait to buy one.', ref: 'GH p.45' },
+  { name: 'Splash', link: true, text: 'If the shot hits, also roll to hit every other model within 1" of the target, friend or foe. At long range this spreads to 2", and those extra targets are rolled at -1 to hit and -1 to wound.', ref: 'GH p.45' },
 ];
