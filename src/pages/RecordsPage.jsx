@@ -8,8 +8,8 @@ export default function RecordsPage() {
   return <SignInGate what="the group's records"><Records /></SignInGate>;
 }
 
-// Most wins first, then fewest losses, then most played.
-const byRecord = (a, b) => b.win - a.win || a.loss - b.loss || b.played - a.played;
+// Most wins first, then most draws, then fewest losses, then most played.
+const byRecord = (a, b) => b.win - a.win || b.draw - a.draw || a.loss - b.loss || b.played - a.played;
 
 function Records() {
   const squads = useAllSquads();
