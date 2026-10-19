@@ -1,11 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Admins: one doc per admin account, added by hand in the Firebase console.
+    function isAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+    }
     // Squads: any signed-in player can view (for opponents' points ratings), only the owner can change.
+    // Admins can fix any squad (the owner stays the same).
     match /squads/{squadId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow update: if isAdmin() && request.resource.data.ownerId == resource.data.ownerId;
     }
     // Shared battles, keyed by their join code. Any signed-in player can look one up by code;
     // only players in the battle can change it, and anyone can add themselves to join.

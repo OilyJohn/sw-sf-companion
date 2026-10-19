@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth.jsx';
+import { useIsAdmin } from './admin.js';
 import { signIn, signOutUser } from './firebase.js';
 import { THEMES, applyTheme, getTheme } from './theme.js';
 import SquadsPage from './pages/SquadsPage.jsx';
@@ -17,6 +18,7 @@ import DocumentsPage from './pages/DocumentsPage.jsx';
 import RecordsPage from './pages/RecordsPage.jsx';
 import SearchPage from './pages/SearchPage.jsx';
 import CampaignTablesPage from './pages/CampaignTablesPage.jsx';
+import AdminPage from './pages/AdminPage.jsx';
 import { INJURIES, PROMOTIONS } from './data/campaignRules.js';
 
 const NAV = [
@@ -37,13 +39,17 @@ const NAV = [
   ] },
   { section: 'Documents & Resources', links: [{ to: '/documents', label: 'PDFs' }] },
 ];
+// Only shown to admins.
+const ADMIN_NAV = { section: 'Admin', links: [{ to: '/admin', label: 'Admin Console' }] };
 
 export default function App() {
   const { user, loading } = useAuth();
+  const admin = useIsAdmin(user?.uid);
+  const nav = admin ? [...NAV, ADMIN_NAV] : NAV;
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState(getTheme);
   const location = useLocation();
-  const title = location.pathname.endsWith('/ship') ? 'Back to the Ship' : NAV.flatMap(s => s.links).find(l => location.pathname.startsWith(l.to))?.label ?? 'Special Forces';
+  const title = location.pathname.endsWith('/ship') ? 'Back to the Ship' : [...NAV, ADMIN_NAV].flatMap(s => s.links).find(l => location.pathname.startsWith(l.to))?.label ?? 'Special Forces';
 
   return (
     <div className={`shell ${open ? 'nav-open' : ''}`}>
@@ -54,7 +60,7 @@ export default function App() {
 
       <nav className="sidebar" onClick={e => e.target.closest('a') && setOpen(false)}>
         <div className="brand">Special Forces</div>
-        {NAV.map(s => (
+        {nav.map(s => (
           <div key={s.section} className="nav-section">
             <div className="nav-heading">{s.section}</div>
             {s.links.map(l => <NavLink key={l.to} to={l.to} end={l.end}>{l.label}</NavLink>)}
@@ -96,6 +102,7 @@ export default function App() {
           <Route path={INJURIES.path} element={<CampaignTablesPage key="injuries" page={INJURIES} />} />
           <Route path="/records" element={<RecordsPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Routes>
       </main>
     </div>
