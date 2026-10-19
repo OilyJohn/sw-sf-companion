@@ -2,6 +2,7 @@
 // "2D10" tables are read as percentile (tens die + units die), giving 0-99.
 
 const row = (min, max, name, text, effect = null) => ({ min, max, name, text, effect });
+// A row can also list `traits` it names, which the rules pages make tappable.
 
 export function lookup(table, roll) {
   return table.rows.find(r => roll >= r.min && roll <= r.max) ?? null;
@@ -53,8 +54,8 @@ export const HERO_PROMOTION = {
     row(45, 59, 'Roll for a General Trait', 'Re-roll if you get one you already have.', { todo: 'Roll on the General trait table' }),
     row(60, 79, 'New CC/Shooting Trait', 'Choose which table to roll on. Re-roll if you get one you already have.', { todo: 'Roll on the Close Combat or Shooting trait table' }),
     row(80, 89, 'Choose From any of the Above Results', 'Pick any result from 0-79.', { todo: 'Choose any Hero Promotion result from 0-79' }),
-    row(90, 94, 'Hero Only Trait or Weapons Specialist', 'Roll for a Hero Only trait, or become a Weapons Specialist.', { todo: 'Roll on the Hero Only trait table or become a Weapons Specialist' }),
-    row(95, 99, 'Other Gear / Force Sensitive', 'Roll on the Other Gear table, or become force sensitive (replace ranged/melee weapons with a lightsaber).', { todo: 'Roll on the Other Gear table or become force sensitive' }),
+    { ...row(90, 94, 'Hero Only Trait or Weapons Specialist', 'Roll for a Hero Only trait, or become a Weapons Specialist.', { todo: 'Roll on the Hero Only trait table or become a Weapons Specialist' }), traits: ['Weapons Specialist'] },
+    { ...row(95, 99, 'Other Gear / Force Sensitive', 'Roll on the Other Gear table, or become force sensitive (replace ranged/melee weapons with a lightsaber).', { todo: 'Roll on the Other Gear table or become force sensitive' }), traits: ['Force Sensitive'] },
   ],
 };
 
