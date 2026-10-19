@@ -10,7 +10,7 @@ import {
 } from '../data/campaign.js';
 import TodoTask from '../components/TodoTask.jsx';
 import { FORCE_UNITS } from '../data/rules.js';
-import { maxShift, promotionOptions } from '../promotions.js';
+import { maxShift, promotionOptions, promotionsDue } from '../promotions.js';
 import { saveSquad, useSquad } from '../squads.js';
 
 export default function ShipPage() {
@@ -18,8 +18,6 @@ export default function ShipPage() {
 }
 
 const isHero = u => u.role !== 'regular';
-const promotionsDue = u =>
-  ['dead', 'mia'].includes(u.status) ? 0 : Math.floor(u.exp / EXP_PER_PROMOTION) - (u.promotions ?? 0);
 
 function Ship() {
   const { id } = useParams();

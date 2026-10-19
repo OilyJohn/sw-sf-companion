@@ -7,6 +7,10 @@ import { unitStats } from './squads.js';
 
 const isHero = u => u.role !== 'regular';
 
+// Promotion rolls owed: one per full EXP box not yet rolled for (none for the dead or M.I.A.).
+export const promotionsDue = u =>
+  ['dead', 'mia'].includes(u.status) ? 0 : Math.floor(u.exp / EXP_PER_PROMOTION) - (u.promotions ?? 0);
+
 // The choices a promotion result gives this unit, as [button label, unit patch] pairs,
 // or null when the unit can't take the result and must re-roll.
 // `pending` is the unit's to-do list to add any new to-do to.
