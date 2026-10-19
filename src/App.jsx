@@ -16,6 +16,8 @@ import WeaponsPage from './pages/WeaponsPage.jsx';
 import DocumentsPage from './pages/DocumentsPage.jsx';
 import RecordsPage from './pages/RecordsPage.jsx';
 import SearchPage from './pages/SearchPage.jsx';
+import CampaignTablesPage from './pages/CampaignTablesPage.jsx';
+import { INJURIES, PROMOTIONS } from './data/campaignRules.js';
 
 const NAV = [
   { section: 'Squad Management', links: [
@@ -29,6 +31,8 @@ const NAV = [
     { to: '/rules/traits', label: 'Traits' },
     { to: '/rules/scenarios', label: 'Scenarios' },
     { to: '/rules/weapons', label: 'Weapons and Gear' },
+    { to: PROMOTIONS.path, label: PROMOTIONS.label },
+    { to: INJURIES.path, label: INJURIES.label },
     { to: '/rules', label: 'Gameplay Rules', end: true },
   ] },
   { section: 'Documents & Resources', links: [{ to: '/documents', label: 'PDFs' }] },
@@ -88,6 +92,8 @@ export default function App() {
           <Route path="/rules/scenarios" element={<ScenariosPage />} />
           <Route path="/rules/weapons" element={<WeaponsPage />} />
           <Route path="/rules/search" element={<SearchPage />} />
+          <Route path={PROMOTIONS.path} element={<CampaignTablesPage key="promotions" page={PROMOTIONS} />} />
+          <Route path={INJURIES.path} element={<CampaignTablesPage key="injuries" page={INJURIES} />} />
           <Route path="/records" element={<RecordsPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
         </Routes>

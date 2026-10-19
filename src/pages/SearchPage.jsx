@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SCENARIO_CHOOSING, SCENARIOS } from '../data/campaign.js';
+import { INJURIES, PROMOTIONS, rangeOf } from '../data/campaignRules.js';
 import { SECTIONS } from '../data/gameplayRules.js';
 import { LIGHTSABER_FORMS, TRAIT_TABLES } from '../data/traits.js';
 import { WOTF_BONUSES } from '../data/willOfTheForce.js';
 import { GEAR_GROUPS, PROPERTIES } from '../data/weapons.js';
 
-const PAGES = { '/rules/traits': 'Traits', '/rules/weapons': 'Weapons and Gear', '/rules': 'Gameplay Rules', '/rules/scenarios': 'Scenarios' };
+const PAGES = {
+  '/rules/traits': 'Traits', '/rules/weapons': 'Weapons and Gear', '/rules': 'Gameplay Rules', '/rules/scenarios': 'Scenarios',
+  [PROMOTIONS.path]: PROMOTIONS.label, [INJURIES.path]: INJURIES.label,
+};
 
 // One searchable list across every rules page: { kind, title, sub, paras, to }.
 const strings = v => [v].flat(2).filter(x => typeof x === 'string' && x);
@@ -41,6 +45,12 @@ const INDEX = [
     paras: strings([s.intro, s.needs && `Needs: ${s.needs}`, s.rules, s.note, s.bonus && `Bonus EXP: ${s.bonus}`]), to: '/rules/scenarios',
   })),
   { kind: 'Scenario', title: 'Choosing a Scenario', sub: 'Mission prep', paras: SCENARIO_CHOOSING, to: '/rules/scenarios' },
+  ...[PROMOTIONS, INJURIES].flatMap(pg => [
+    ...pg.rules.map(it => ({ kind: pg.kind, title: it.title, sub: pg.label, paras: strings([it.text, it.list]), to: pg.path })),
+    ...pg.tables.flatMap(tb => tb.rows.map(r => ({
+      kind: pg.kind, title: r.name, sub: `${tb.name} · ${rangeOf(r)}`, paras: strings([r.text, r.traits]), to: pg.path,
+    }))),
+  ]),
   ...WOTF_BONUSES.map(b => ({ kind: 'Will of the Force', title: b.name, sub: `${b.pts} pts bonus`, paras: [b.text] })),
 ].map((e, id) => ({ ...e, id, hay: [e.title, e.sub, ...e.paras].join(' ').toLowerCase() }));
 
@@ -67,7 +77,7 @@ export default function SearchPage() {
   return (
     <div className="stack">
       <input type="search" autoFocus placeholder="Search all rules, e.g. shock recovery" value={query} onChange={e => setQuery(e.target.value)} />
-      {!query.trim() && <p className="muted small">Searches traits, lightsaber forms, weapons and gear, weapon properties, gameplay rules, scenarios and Will of the Force bonuses.</p>}
+      {!query.trim() && <p className="muted small">Searches traits, lightsaber forms, weapons and gear, weapon properties, gameplay rules, scenarios, promotions, injuries and Will of the Force bonuses.</p>}
       {query.trim() && !results.length && <p className="muted">Nothing matches "{query.trim()}".</p>}
       {results.length > 0 && <div className="muted small">{results.length} result{results.length === 1 ? '' : 's'}</div>}
       {results.map(e => (
