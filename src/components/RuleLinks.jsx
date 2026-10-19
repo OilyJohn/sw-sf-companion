@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { gearRule, traitRule } from '../ruleLookup.js';
+import { gearRule, linkedParts, propertyRule, traitRule } from '../ruleLookup.js';
 
 // A "Traits: a, b" or "Equipment: x, y" line where each name opens its rule.
 // kind: 'trait' | 'gear'.
@@ -37,12 +37,27 @@ export function RulePopup({ rule, onClose }) {
         </div>
         {rule.lines.map((l, i) => (
           <div key={i} className={l.old ? 'gh-old' : l.amended ? 'amended small' : l.muted ? 'muted small' : 'small'}>
-            {l.label && <b>{l.label}: </b>}{l.text}
+            {l.label && <b>{l.label}: </b>}<RuleText text={l.text} />
           </div>
         ))}
         <button className="btn" autoFocus onClick={onClose}>OK</button>
       </div>
     </div>,
     document.body,
+  );
+}
+
+// Rule text where linked weapon property names (e.g. Splash) open their rule.
+export function RuleText({ text }) {
+  const [open, setOpen] = useState(null);
+  const parts = linkedParts(text);
+  if (parts.length === 1) return text;
+  return (
+    <>
+      {parts.map((part, i) => (i % 2
+        ? <button key={i} type="button" className="rule-link" onClick={e => { e.stopPropagation(); setOpen(part); }}>{part}</button>
+        : part))}
+      {open && <RulePopup rule={propertyRule(open)} onClose={() => setOpen(null)} />}
+    </>
   );
 }

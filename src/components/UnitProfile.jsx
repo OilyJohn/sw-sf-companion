@@ -2,6 +2,7 @@ import { slotsUsed } from '../data/equipment.js';
 import { findTrait } from '../data/traits.js';
 import { gearRule } from '../ruleLookup.js';
 import ForcePowers from './ForcePowers.jsx';
+import { RuleText } from './RuleLinks.jsx';
 
 // Every trait with its full rule text.
 export function TraitList({ names }) {
@@ -13,7 +14,7 @@ export function TraitList({ names }) {
           <div key={n + i} className="trait">
             <b className="small">{n}</b>
             {tr?.text
-              ? <div className="small">{tr.text}</div>
+              ? <div className="small"><RuleText text={tr.text} /></div>
               : <div className="small muted">No description yet.</div>}
             {tr?.amended && <div className="amended small">{tr.amended}</div>}
           </div>

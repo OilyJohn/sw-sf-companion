@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { factions, forceUser, mercenaries } from '../data/factions.js';
-import { RulePopup } from '../components/RuleLinks.jsx';
+import { RulePopup, RuleText } from '../components/RuleLinks.jsx';
 import { LIGHTSABER_FORMS, TRAIT_TABLES, findTrait } from '../data/traits.js';
 import { formLevelRule } from '../ruleLookup.js';
 
@@ -59,7 +59,7 @@ export default function TraitsPage() {
                     <span>{tr.roll && <span className="roll">{tr.roll}</span>}<b>{tr.name}</b></span>
                     {tr.pts !== null && <span className="pill">{tr.pts > 0 ? `+${tr.pts}` : tr.pts} pts</span>}
                   </div>
-                  {tr.text && <div className="small">{tr.text}</div>}
+                  {tr.text && <div className="small"><RuleText text={tr.text} /></div>}
                   {tr.amended && <div className="amended small">{tr.amended}</div>}
                 </div>
               ))}

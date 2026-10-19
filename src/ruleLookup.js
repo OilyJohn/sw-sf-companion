@@ -53,6 +53,27 @@ export function gearRule(name) {
   return { title: name + shownAs, sub: `${it.group} · ${slots}`, lines };
 }
 
+// A weapon property by name, for the popup when it's tapped inside trait text.
+export function propertyRule(name) {
+  const p = PROPERTIES.find(x => norm(x.name) === norm(name));
+  if (!p) return null;
+  return {
+    title: p.name,
+    sub: 'Weapon property',
+    lines: [
+      { text: p.text },
+      ...(p.amended ? [{ text: p.amended, amended: true }] : []),
+      ...(p.gh ? [{ text: `Old GH rule: ${p.gh}`, old: true }] : []),
+      ...(p.ref ? [{ text: p.ref, muted: true }] : []),
+    ],
+  };
+}
+
+// Splits text into plain strings and the names of `link: true` properties in it.
+const LINKED = PROPERTIES.filter(p => p.link).map(p => p.name);
+const LINKED_RE = LINKED.length ? new RegExp(`\\b(${LINKED.join('|')})\\b`, 'g') : null;
+export const linkedParts = text => (LINKED_RE && text ? text.split(LINKED_RE) : [text]);
+
 // One level of a lightsaber form, e.g. ['Ferocious (4)', 'Brittle (-1)'], with each trait's rule.
 export function formLevelRule(form, levelIndex) {
   const lines = [];
