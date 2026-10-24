@@ -146,6 +146,8 @@ h1, h2, .brand, .stat-value, .battle-code, .icon-btn, a, details summary, strong
 .small { font-size: .85rem; }
 .warn { color: var(--accent); }
 .dim { opacity: .55; }
+.callout { background: var(--panel-2); border-left: 3px solid var(--accent); padding: 8px 10px; }
+.callout b { color: var(--accent); }
 
 .pill { --cut: 6px; background: var(--panel-2); padding: 2px 10px; font-size: .85rem; white-space: nowrap; }
 .tag { --cut: 4px; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; margin-left: 8px; padding: 1px 6px; background: var(--panel-2); color: var(--muted); }

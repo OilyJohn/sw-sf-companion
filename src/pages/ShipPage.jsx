@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import ExpShift from '../components/ExpShift.jsx';
+import RegearNotice from '../components/RegearNotice.jsx';
 import ResultPopup from '../components/ResultPopup.jsx';
 import RollInput from '../components/RollInput.jsx';
 import SignInGate from '../components/SignInGate.jsx';
@@ -209,6 +210,7 @@ function PromotionRoll({ unit, squad, onApply, onRolled, reroll }) {
           <div><b>{res.min}-{res.max}: {res.name}.</b> <span className="small">{res.text}</span></div>
           <ExpShift shift={shift} max={maxShift(unit)} canUp={allowed(at + shift + 1)} canDown={allowed(at + shift - 1)} onShift={setShift} />
           {options === null && <div className="warn small">Can't take this result here, so re-roll.</div>}
+          <RegearNotice unit={unit} options={options} />
           <div className="row gap wrap">
             {options?.map(([label, patch]) => <button key={label} className="btn" onClick={() => onApply(spend(patch))}>{label}</button>)}
             {options === null && <button className="btn ghost" onClick={reset}>Re-roll</button>}
