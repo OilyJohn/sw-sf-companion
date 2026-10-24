@@ -2,6 +2,7 @@ import { useState } from 'react';
 import EquipmentPicker from './EquipmentPicker.jsx';
 import ExpShift from './ExpShift.jsx';
 import OtherGearRoll from './OtherGearRoll.jsx';
+import RegearNotice from './RegearNotice.jsx';
 import ResultPopup from './ResultPopup.jsx';
 import RollInput from './RollInput.jsx';
 import { slotsUsed } from '../data/equipment.js';
@@ -201,6 +202,7 @@ function PromotionTask({ unit, squad, spec, onDone }) {
       </select>
       {res && <div className="small">{res.text}</div>}
       {res && options === null && <div className="warn small">{unit.name} can't take this one, so choose another.</div>}
+      <RegearNotice unit={unit} options={options} />
       <div className="row gap wrap">
         {options?.map(([label, patch]) => <button key={label} className="btn" onClick={() => onDone(patch)}>{label}</button>)}
       </div>
@@ -236,14 +238,13 @@ function RegearTask({ unit, squad, onDone }) {
 
   return (
     <div className="stack">
+      <div className="callout small"><b>Free of charge.</b> Swap any gear now without spending credits. Anything taken off goes to the armoury.</div>
       {notAllowed.length > 0 && <div className="warn small">A {unit.type} can't carry: {notAllowed.join(', ')}.</div>}
       {overSlots && <div className="warn small">Their gear needs more slots than a {unit.type} has ({st.eqSlots}).</div>}
-      {notAllowed.length === 0 && !overSlots && <div className="muted small">{unit.name} can carry everything they have now. Change it anyway if you like.</div>}
       <EquipmentPicker allowed={allowed} slots={st.eqSlots} value={value} onChange={setValue} />
-      <div className="muted small">Free of charge. Anything taken off goes to the armoury.</div>
       <button className="btn" disabled={tooMany} onClick={() => onDone({ equipment: value }, {
         armoury: [...(squad.armoury ?? []), ...removedGear(equipment, value)],
-      })}>Save gear</button>
+      })}>Save gear (free)</button>
     </div>
   );
 }

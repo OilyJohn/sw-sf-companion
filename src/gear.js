@@ -27,11 +27,6 @@ export function gearProblems(unit, st) {
   };
 }
 
-export const needsRegear = (unit, st) => {
-  const p = gearProblems(unit, st);
-  return p.notAllowed.length > 0 || p.overSlots;
-};
-
 // Items in `before` that aren't in `after`, counting duplicates.
 export function removedGear(before, after) {
   const left = [...after];
