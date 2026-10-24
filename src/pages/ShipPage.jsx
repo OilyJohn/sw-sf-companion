@@ -11,7 +11,7 @@ import {
 import TodoTask from '../components/TodoTask.jsx';
 import { FORCE_UNITS } from '../data/rules.js';
 import { maxShift, promotionOptions, promotionsDue } from '../promotions.js';
-import { saveSquad, useSquad } from '../squads.js';
+import { saveSquad, unitStats, useSquad } from '../squads.js';
 
 export default function ShipPage() {
   return <SignInGate what="this squad"><Ship /></SignInGate>;
@@ -60,7 +60,7 @@ function Ship() {
       <Section n={1} title="Injuries" done={!injuries.length}>
         {injuries.length === 0 && <p className="muted small">No injury rolls left.</p>}
         {injuries.map(u => (
-          <InjuryRoll key={u.id} unit={u} reroll={reroll('injury', u.id)}
+          <InjuryRoll key={u.id} unit={u} squad={squad} reroll={reroll('injury', u.id)}
             onRolled={() => setLatest(l => ({ ...l, injury: u.id }))} onApply={(patch, credits = 0) => updateUnit(u.id, patch, {
             credits: squad.credits + credits,
             backToShip: { ...ship, injuries: ship.injuries.filter(x => x !== u.id) },
@@ -128,12 +128,19 @@ function WotfReroll({ reroll, onUse }) {
   return <button className="btn ghost" onClick={() => { reroll.use(); onUse(); }}>Re-roll (Will of the Force, {reroll.left} left)</button>;
 }
 
-function InjuryRoll({ unit, onApply, onRolled, reroll }) {
+// Survivor: +1 to injury rolls, +10 for heroes (their table is 2D10, 0-99). Capped at the table's top row.
+const survivorBonus = (unit, squad) =>
+  (unitStats(unit, squad.faction)?.traits.includes('Survivor') ? (isHero(unit) ? 10 : 1) : 0);
+
+function InjuryRoll({ unit, squad, onApply, onRolled, reroll }) {
   const table = isHero(unit) ? HERO_INJURY : WARRIOR_INJURY;
+  const bonus = survivorBonus(unit, squad);
   const [roll, setRoll] = useState(null);
   const [irl, setIrl] = useState(false);
   const [popup, setPopup] = useState(false);
-  const res = roll === null ? null : lookup(table, roll);
+  const total = roll === null ? null : Math.min(roll + bonus, table.max);
+  const res = roll === null ? null : lookup(table, total);
+  const rolled = bonus ? `${roll} +${bonus} Survivor = ${total}` : `${roll}`;
 
   function apply(effect = res.effect ?? {}) {
     const patch = {};
@@ -145,13 +152,13 @@ function InjuryRoll({ unit, onApply, onRolled, reroll }) {
 
   return (
     <div className="sub">
-      <div className="row between"><strong>{unit.name}</strong><span className="muted small">{table.name} ({table.dice})</span></div>
+      <div className="row between"><strong>{unit.name}</strong><span className="muted small">{table.name} ({table.dice}{bonus ? ` +${bonus} Survivor` : ''})</span></div>
       {res === null ? (
         <RollInput dice={table.dice} min={table.min} max={table.max} onRoll={(n, typed) => { setRoll(n); setIrl(typed); setPopup(true); onRolled(); }} />
       ) : (
         <div className="stack">
-          {popup && <ResultPopup heading={`${unit.name} rolled ${roll} on ${table.name}`} items={[{ title: res.name, text: res.text }]} onClose={() => setPopup(false)} />}
-          <div><b>{roll}: {res.name}.</b> <span className="small">{res.text}</span>
+          {popup && <ResultPopup heading={`${unit.name} rolled ${rolled} on ${table.name}`} items={[{ title: res.name, text: res.text }]} onClose={() => setPopup(false)} />}
+          <div><b>{rolled}: {res.name}.</b> <span className="small">{res.text}</span>
             {irl && <> <button className="link-btn small" onClick={() => setRoll(null)}>change</button></>}</div>
           <div className="row gap wrap">
             {res.effect?.choice === 'mystery' ? (
