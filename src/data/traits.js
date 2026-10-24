@@ -177,7 +177,7 @@ TRAIT_TABLES.push({
   note: 'Not in the campaign docs, so the text is from the Galactic Heroes 2nd Ed rulebook (Leader is summarised from p. 27).',
   traits: [
     t(null, 'Leader', null, 'Given free to the squad leader. Friendly units within 12" and in line of sight of the leader get +1 when rolling to recover from Shaken or from being Wounded and Down. A natural 1 still fails: a unit removing shock routs, and a unit trying to get up from a wound expires.'),
-    t(null, 'Small', null, 'You are smaller than most. That makes you a hard target. Enemies shooting at you get a -1 to their roll. However, your size gives you only 2 wounds instead of the normal 3, as well as a -1 to any wound rolls you deliver in Close Combat.'),
+    t(null, 'Small', null, 'You are smaller than most. That makes you a hard target. Enemies shooting at you get a -1 to their roll. However, your size gives you a -1 to any wound rolls you deliver in Close Combat.'),
     t(null, 'Soulless', null, 'You never take Shock results. But your lack of self-preservation makes you easier to hit. Anyone targeting you with a Shoot action gets a +1 to their roll.'),
   ],
 });
