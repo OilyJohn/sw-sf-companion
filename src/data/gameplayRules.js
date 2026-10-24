@@ -196,7 +196,7 @@ export const SECTIONS = [
         'A Shaken model fights at -1 per Shock marker. If it wins, it removes all its Shock.',
         'A Downed model stays down and fights at -1 for being prone, plus its Wound and Shock penalties. If it wins, it may roll straight away to stand.',
       ], ref: 'GH pp. 15, 17' },
-      { title: 'Deadly weapons', text: 'A natural Close Combat roll of 10+ is an automatic Wounded result.', amended: 'Nerfed.', gh: 'Deadly puts the target straight Out of Action.', ref: 'GH p.44' },
+      { title: 'Deadly weapons', text: 'A natural Close Combat roll of 10+ gives +3 to the wound roll.', amended: 'Nerfed.', gh: 'Deadly puts the target straight Out of Action.', ref: 'GH p.44' },
       { title: 'Knocking down doors', text: [
         'Fight it like Close Combat against a fixed roll: wooden fence 3, door 4, reinforced door 6, stone wall or rubble 7. Beat it and roll to wound: Shaken does nothing, Wounded damages it, and a result that would take it out destroys it (or opens a 2" gap). You cannot be hurt attacking a door.',
       ], ref: 'GH p.14' },

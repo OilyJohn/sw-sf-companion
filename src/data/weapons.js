@@ -75,7 +75,7 @@ export const GEAR_GROUPS = [
 export const PROPERTIES = [
   { name: 'Suppressing Fire', tag: 'New', text: 'If you miss a shot, make a Hard (8+) Task roll to give the target 1 shock token.' },
   { name: 'Inaccurate', tag: 'Buffed', text: 'Choose to take a regular shot, or a shot at -1 to hit and +1 to wound.', gh: 'Always -1 to hit, +1 to wound.', ref: 'GH p.44' },
-  { name: 'Deadly', tag: 'Nerfed', text: 'Natural CC rolls of 10+ are an automatic Wounded result.', gh: 'Automatically Out of Action.', ref: 'GH p.44' },
+  { name: 'Deadly', tag: 'Nerfed', text: 'Natural CC rolls of 10+ give +3 to the wound roll.', gh: 'Automatically Out of Action.', ref: 'GH p.44' },
   { name: 'AP (Armour Piercing)', text: 'The target\'s armour drops one level: Heavy counts as Light, Light counts as none.', ref: 'GH p.44' },
   { name: 'Burst Fire', text: 'Against a target in short range, place the 3" template and roll to hit, at -1, every model at least half under it. Ignore the template\'s wound bonus ring. "Burst (Always)" can do this at long range too.', ref: 'GH p.44' },
   { name: 'Blast', text: 'Centre the template (Blast 5 = 5" across) on a model or point in sight and roll to hit. Every model at least half under it is hit, with +1 to wound in the centre ring. A miss scatters d10" in the direction the die points (double at long range). Rolling to hit equal to or under the number of models under it means Out of Ammo. A natural 1 can blow up on the shooter.', ref: 'GH p.44' },
