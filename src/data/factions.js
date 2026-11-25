@@ -47,6 +47,9 @@ const MAGNA = ['Electrostaff', 'Light Armour', 'Blaster Pistol'];
 const NS_WARRIOR = ['2 Hand Axe (Flail)', 'Dagger', 'Throwing Weapons', 'Light Armour'];
 const NS_ARCHER = ['Bow', 'Light Armour'];
 const NS_WITCH = ['Conjured 2H Sword', 'Light Armour'];
+const IR_OFFICER = ['Blaster Pistol', 'Combat Knife', 'Thermal Detonator', 'Light Armour'];
+const STORM = ['Blaster Rifle', 'Blaster Carbine', 'Repeating Blaster', 'Thermal Detonator', 'Light Armour'];
+const DEATH = ['Blaster Rifle', 'Blaster Carbine', 'Repeating Blaster', 'Thermal Detonator'];
 
 export const factions = [
   {
@@ -153,6 +156,26 @@ export const factions = [
       u(17, 'Nightsister Witch', 1, 10, 10, ['Magick Lightning'], NS_WITCH, 2, ['Nightsister Shaman']),
       u(21, 'Nightsister Shaman', 1, 10, 10, ['Magick Lightning', 'Run & Gun'], [...NS_WITCH, 'Green Fireball'], 3, ['Mother']),
       u(27, 'Mother', 1, 10, 12, ['Magick Lightning', 'Run & Gun', 'Fearsome Appearance'], [...NS_WITCH, 'Green Fireball'], 4),
+    ],
+  },
+  {
+    id: 'imperial-remnants', name: 'Imperial Remnants', complete: true, promotionsInferred: true,
+    // PDF info page is blank: points come from the cost formula, reinforcements are each line's base unit,
+    // and promotion chains follow the table order.
+    reinforcements: { 'Remnant Stormtrooper': 8, 'KX Security Droid': 10, 'Death Trooper': 15, 'Imperial Remnant Officer': 17, 'Jedi/Sith': 19 },
+    units: [
+      u(10, 'KX Security Droid', 1, 10, 8, ['Soulless', 'Pugilist'], [], 0, ['KX Enforcer Droid']),
+      u(16, 'KX Enforcer Droid', 1, 10, 8, ['Soulless', 'Pugilist', 'Armoured', 'Street Fighter', 'Two Fisted'], [], 0, ['KX Sentinel Droid']),
+      u(23, 'KX Sentinel Droid', 1, 12, 8, ['Soulless', 'Pugilist', 'Armoured', 'Street Fighter', 'Two Fisted', 'Freight Train', 'Solid as a Rock'], [], 0),
+      u(17, 'Imperial Remnant Officer', 1, 8, 10, ['Disarm', 'Quickdraw'], IR_OFFICER, 3, ['Imperial Remnant Warlord']),
+      u(23, 'Imperial Remnant Warlord', 1, 10, 10, ['Disarm', 'Quickdraw', 'Slippery'], [...IR_OFFICER, 'Vibrosword'], 4, ['Imperial Remnant Moff']),
+      u(31, 'Imperial Remnant Moff', 1, 10, 10, ['Disarm', 'Quickdraw', 'Slippery', 'Double Tap', 'Strategist'], [...IR_OFFICER, 'Vibrosword', 'Heavy Armour'], 5),
+      u(8, 'Remnant Stormtrooper', 1, 8, 8, [], STORM, 2, ['Stormtrooper Veteran']),
+      u(14, 'Stormtrooper Veteran', 1, 8, 10, ['Lucky Shot'], STORM, 3, ['Elite Stormtrooper']),
+      u(21, 'Elite Stormtrooper', 1, 8, 10, ['Lucky Shot', 'Deep Breath', 'Sniper'], [...STORM, 'Heavy Armour'], 4),
+      u(15, 'Death Trooper', 1, 8, 10, ['Armoured', 'Fearsome Appearance'], DEATH, 2, ['Death Trooper Veteran']),
+      u(20, 'Death Trooper Veteran', 1, 8, 10, ['Armoured', 'Fearsome Appearance', 'Deadeye', 'Nerves of Steel'], [...DEATH, 'Light Armour'], 3, ['Death Trooper Executioner']),
+      u(28, 'Death Trooper Executioner', 1, 8, 12, ['Armoured', 'Fearsome Appearance', 'Deadeye', 'Nerves of Steel', 'Killer'], [...DEATH, 'Light Armour', 'Heavy Armour'], 4),
     ],
   },
 ];
