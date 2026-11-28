@@ -7,7 +7,7 @@ export default function RegearNotice({ unit, options }) {
   return (
     <div className="callout small">
       <b>Free regear.</b> Promoting to {types.join(' or ')} lets you re-equip {unit.name} at no credit cost.
-      A Regear to-do is added under To do; anything taken off goes to the armoury.
+      A Regear to-do is added under To do; anything taken off is discarded.
     </div>
   );
 }

@@ -27,7 +27,7 @@ function Admin() {
   return (
     <div className="stack">
       <div className="card stack">
-        <p className="small">Fix a squad after a battle: credits, EXP, status, or an injury roll someone missed.</p>
+        <p className="small">Fix a squad after a battle: credits, armoury, EXP, status, or an injury roll someone missed.</p>
         <select value={id} onChange={e => setId(e.target.value)}>
           <option value="">Choose a squad…</option>
           {sorted.map(s => <option key={s.id} value={s.id}>{s.name} ({s.ownerName || 'Unknown player'})</option>)}
@@ -74,9 +74,30 @@ function SquadFixes({ squad }) {
           <button className="icon-btn step" aria-label="Increase credits" onClick={() => saveSquad(squad.id, { credits: squad.credits + 1 })}>+</button>
         </div>
       </div>
+      <ArmouryFixes armoury={squad.armoury ?? []} onChange={armoury => saveSquad(squad.id, { armoury })} />
       {units.map(u => (
         <UnitFixes key={u.id} unit={u} pendingInjury={ship?.injuries?.includes(u.id)} inBattle={inBattle}
           onChange={(patch, injury) => updateUnit(u.id, patch, injury)} />
+      ))}
+    </div>
+  );
+}
+
+// Remove gear that shouldn't be in the armoury (e.g. copies left by an old regear bug), 1 at a time.
+function ArmouryFixes({ armoury, onChange }) {
+  const counts = [...armoury.reduce((m, g) => m.set(g, (m.get(g) ?? 0) + 1), new Map())];
+  return (
+    <div className="stack">
+      <span className="small">Armoury{counts.length ? '' : ': empty'}</span>
+      {counts.map(([g, n]) => (
+        <div key={g} className="counter">
+          <span className="small">{g}</span>
+          <div className="row gap">
+            <button className="icon-btn step" aria-label={`Remove 1 ${g} from the armoury`}
+              onClick={() => onChange(armoury.filter((_, i) => i !== armoury.indexOf(g)))}>−</button>
+            <b className="count">{n}</b>
+          </div>
+        </div>
       ))}
     </div>
   );
