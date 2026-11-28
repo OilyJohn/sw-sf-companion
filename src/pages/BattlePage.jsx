@@ -106,9 +106,19 @@ function BattleHome() {
 }
 
 function SquadBattle({ id }) {
+  const { user } = useAuth();
   const squad = useSquad(id);
   if (squad === undefined) return <p className="muted">Loading…</p>;
   if (squad === null) return <p>Squad not found.</p>;
+  // Only the owner can start, track or end this squad's battles.
+  if (squad.ownerId !== user.uid) {
+    return (
+      <div className="card stack">
+        <p>{squad.name} is another player's squad{squad.battle ? ' and has a battle in progress' : ''}. Only its owner can run its battles.</p>
+        <Link className="btn" to={`/squads/${squad.id}`}>Go to the squad page</Link>
+      </div>
+    );
+  }
   if (squad.backToShip) {
     return (
       <div className="card stack">

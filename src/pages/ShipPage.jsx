@@ -4,6 +4,7 @@ import ExpShift from '../components/ExpShift.jsx';
 import RegearNotice from '../components/RegearNotice.jsx';
 import ResultPopup from '../components/ResultPopup.jsx';
 import RollInput from '../components/RollInput.jsx';
+import { useAuth } from '../auth.jsx';
 import SignInGate from '../components/SignInGate.jsx';
 import {
   EXP_PER_PROMOTION, FORCE_HERO_PROMOTION, FORCE_REGULAR_PROMOTION, HERO_INJURY, HERO_PROMOTION,
@@ -23,12 +24,15 @@ const isHero = u => u.role !== 'regular';
 function Ship() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const squad = useSquad(id);
   // The unit whose injury / promotion roll came last: only that roll offers a Will of the Force re-roll.
   const [latest, setLatest] = useState({});
   if (squad === undefined) return <p className="muted">Loading…</p>;
   if (squad === null) return <p>Squad not found.</p>;
 
+  // Only the owner rolls and applies results. Anyone else (e.g. from the leaderboard) just sees the list.
+  const mine = squad.ownerId === user.uid;
   const ship = squad.backToShip;
   const last = squad.history?.at(-1);
   const injuries = (ship?.injuries ?? []).map(uid => squad.units.find(u => u.id === uid)).filter(Boolean);
@@ -56,11 +60,13 @@ function Ship() {
             Now {squad.credits} credits.
           </div>
         )}
+        {!mine && <div className="warn small">This is another player's squad, so you can only look.</div>}
       </div>
 
       <Section n={1} title="Injuries" done={!injuries.length}>
         {injuries.length === 0 && <p className="muted small">No injury rolls left.</p>}
-        {injuries.map(u => (
+        {!mine && injuries.map(u => <Waiting key={u.id} unit={u} what="Injury roll" />)}
+        {mine && injuries.map(u => (
           <InjuryRoll key={u.id} unit={u} squad={squad} reroll={reroll('injury', u.id)}
             onRolled={() => setLatest(l => ({ ...l, injury: u.id }))} onApply={(patch, credits = 0) => updateUnit(u.id, patch, {
             credits: squad.credits + credits,
@@ -71,12 +77,13 @@ function Ship() {
 
       <Section n={2} title="Promotions" done={!promos.length}>
         {promos.length === 0 && <p className="muted small">Nobody has a full EXP box ({EXP_PER_PROMOTION} EXP) waiting.</p>}
-        {promos.map(u => (
+        {!mine && promos.map(u => <Waiting key={u.id} unit={u} what="Promotion roll" />)}
+        {mine && promos.map(u => (
           <PromotionRoll key={u.id} unit={u} squad={squad} reroll={reroll('promotion', u.id)}
             onRolled={() => setLatest(l => ({ ...l, promotion: u.id }))}
             onApply={patch => updateUnit(u.id, { ...patch, promotions: (u.promotions ?? 0) + 1 })} />
         ))}
-        {promos.length > 0 && (
+        {mine && promos.length > 0 && (
           <p className="muted small">
             Excess EXP can shift a result up or down the table, 1 EXP per result.
             Regular units can shift by 1 at most and can't reach Promotion to Hero this way.
@@ -86,7 +93,8 @@ function Ship() {
 
       <Section n={3} title="To do" done={!todos.length}>
         {todos.length === 0 && <p className="muted small">Nothing outstanding.</p>}
-        {todos.map(u => u.pending.map((p, i) => (
+        {!mine && todos.map(u => u.pending.map(p => <Waiting key={u.id + p} unit={u} what={p} />))}
+        {mine && todos.map(u => u.pending.map((p, i) => (
           <TodoTask key={u.id + i + p} unit={u} squad={squad} text={p}
             onDone={(patch, extra) => {
               // Drop this to-do; a result can also add new ones (patch.pending holds only the new ones).
@@ -96,18 +104,23 @@ function Ship() {
         )))}
       </Section>
 
-      <Section n={4} title="Spend credits">
+      {mine && <Section n={4} title="Spend credits">
         <p className="small">You have <b>{squad.credits}</b> credits. Equipment costs 1 credit per slot for regulars, 2 for heroes.
           Reinforcements and kit are on the <Link to={`/squads/${squad.id}`}>squad page</Link>.</p>
-      </Section>
+      </Section>}
 
-      {ship && (
+      {mine && ship && (
         <button className="btn wide" disabled={!allDone} onClick={() => { saveSquad(squad.id, { backToShip: null }); navigate(`/squads/${squad.id}`); }}>
           {allDone ? 'Finish Back to the Ship' : 'Finish injuries and promotions first'}
         </button>
       )}
     </div>
   );
+}
+
+// What a non-owner sees in place of a roll or to-do.
+function Waiting({ unit, what }) {
+  return <div className="sub row between"><strong>{unit.name}</strong><span className="muted small">{what}: waiting on owner</span></div>;
 }
 
 function Section({ n, title, done, children }) {

@@ -27,7 +27,7 @@ function Admin() {
   return (
     <div className="stack">
       <div className="card stack">
-        <p className="small">Fix a squad after a battle: EXP, status, or an injury roll someone missed.</p>
+        <p className="small">Fix a squad after a battle: credits, EXP, status, or an injury roll someone missed.</p>
         <select value={id} onChange={e => setId(e.target.value)}>
           <option value="">Choose a squad…</option>
           {sorted.map(s => <option key={s.id} value={s.id}>{s.name} ({s.ownerName || 'Unknown player'})</option>)}
@@ -66,6 +66,14 @@ function SquadFixes({ squad }) {
       <div className="muted small">{[getFaction(squad.faction)?.name, squad.ownerName].filter(Boolean).join(' · ')}</div>
       {inBattle && <div className="warn small">This squad is in a battle. Injury rolls can be added once it ends.</div>}
       {ship && <div className="small">Back to the Ship is open. <Link to={`/squads/${squad.id}/ship`}>See its list</Link></div>}
+      <div className="counter">
+        <span className="small">Credits</span>
+        <div className="row gap">
+          <button className="icon-btn step" aria-label="Decrease credits" onClick={() => saveSquad(squad.id, { credits: Math.max(0, squad.credits - 1) })}>−</button>
+          <b className="count">{squad.credits}</b>
+          <button className="icon-btn step" aria-label="Increase credits" onClick={() => saveSquad(squad.id, { credits: squad.credits + 1 })}>+</button>
+        </div>
+      </div>
       {units.map(u => (
         <UnitFixes key={u.id} unit={u} pendingInjury={ship?.injuries?.includes(u.id)} inBattle={inBattle}
           onChange={(patch, injury) => updateUnit(u.id, patch, injury)} />
