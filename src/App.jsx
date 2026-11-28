@@ -16,6 +16,7 @@ import SharedBattlePage from './pages/SharedBattlePage.jsx';
 import WeaponsPage from './pages/WeaponsPage.jsx';
 import DocumentsPage from './pages/DocumentsPage.jsx';
 import RecordsPage from './pages/RecordsPage.jsx';
+import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import SearchPage from './pages/SearchPage.jsx';
 import CampaignTablesPage from './pages/CampaignTablesPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
@@ -26,6 +27,7 @@ const NAV = [
     { to: '/squads', label: 'My Squads' },
     { to: '/factions', label: 'Factions & Units' },
     { to: '/records', label: 'Win/Loss Records' },
+    { to: '/leaderboard', label: 'Unit Leaderboard' },
   ] },
   { section: 'During a Battle', links: [{ to: '/battle', label: 'Battle Tracker' }] },
   { section: 'Rules Clarifications', links: [
@@ -101,6 +103,7 @@ export default function App() {
           <Route path={PROMOTIONS.path} element={<CampaignTablesPage key="promotions" page={PROMOTIONS} />} />
           <Route path={INJURIES.path} element={<CampaignTablesPage key="injuries" page={INJURIES} />} />
           <Route path="/records" element={<RecordsPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/admin" element={<AdminPage />} />
         </Routes>
