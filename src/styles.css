@@ -272,3 +272,10 @@ summary.section-head::-webkit-details-marker { display: none; }
 
 .theme-picker { display: grid; gap: 4px; }
 .theme-picker select { padding: 8px; font-size: .9rem; }
+
+/* Unit leaderboard: name + 5 stat columns; headers are sort buttons */
+.leader-table { display: grid; grid-template-columns: 1fr repeat(5, 3.5ch); gap: 8px 10px; align-items: center; }
+.leader-table > :not(:nth-child(6n + 1)) { text-align: center; }
+.leader-table a { color: var(--text); }
+.leader-table .link-btn { padding: 0; font-size: inherit; text-align: center; }
+.leader-table .link-btn.on { color: var(--accent); font-weight: 700; text-decoration: underline; }

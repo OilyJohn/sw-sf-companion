@@ -371,6 +371,11 @@ export function EndBattle({ squad, onBack, fixedResult = null, mvpPick, mvpsPick
   async function finish() {
     const expGained = Object.fromEntries(staying.map(u => [u.id, exp(u)]));
     const injuries = staying.filter(u => battle.units[u.id].ooa).map(u => u.id);
+    // Per-unit tallies for the unit leaderboard. Name and type are kept so a unit removed later still shows.
+    const stats = Object.fromEntries(staying.map(u => {
+      const t = battle.units[u.id];
+      return [u.id, { name: u.name, type: u.type, wounds: t.wounds, heroKills: t.heroKills, objective: t.objective, ooa: !!t.ooa }];
+    }));
     const has = id => countOf(wotf?.bonuses, id);
     await saveSquad(squad.id, {
       credits: funds,
@@ -390,7 +395,7 @@ export function EndBattle({ squad, onBack, fixedResult = null, mvpPick, mvpsPick
         ...(battle.test ? { test: true } : {}),
         ...(wotf ? { wotf: wotf.bonuses } : {}),
         ...(bounties.length ? { bounties: bounties.map(u => ({ unit: u.id, target: battle.units[u.id].bounty ?? '' })) } : {}),
-        result, credits, mvp: mvp || null, exp: expGained, outOfAction: injuries,
+        result, credits, mvp: mvp || null, exp: expGained, outOfAction: injuries, stats,
       }],
     });
     navigate(`/squads/${squad.id}/ship`);
