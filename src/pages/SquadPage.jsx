@@ -282,11 +282,7 @@ function UnitCard({ unit, squad, mine, onChange, onRole, canSucceed, onSucceed, 
             )}
             <div className="counter">
               <span className="small">EXP (promotions taken: {unit.promotions ?? 0})</span>
-              <div className="row gap">
-                <button className="icon-btn step" aria-label="Decrease EXP" onClick={() => onChange({ exp: Math.max(0, unit.exp - 1) })}>−</button>
-                <b className="count">{unit.exp}</b>
-                <button className="icon-btn step" aria-label="Increase EXP" onClick={() => onChange({ exp: unit.exp + 1 })}>+</button>
-              </div>
+              <b className="count">{unit.exp}</b>
             </div>
             <label>Status
               <select value={unit.status} onChange={e => onChange({ status: e.target.value })}>
