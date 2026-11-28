@@ -148,7 +148,9 @@ function Squad() {
           <Stat label="Units" value={active.length} />
         </div>
         {warnings.map(w => <div key={w} className="warn small">{w}</div>)}
-        {squad.battle && <Link className="btn wide banner" to={`/battle/${squad.id}`}>Battle in progress: open tracker</Link>}
+        {squad.battle && (mine
+          ? <Link className="btn wide banner" to={`/battle/${squad.id}`}>Battle in progress: open tracker</Link>
+          : <div className="warn small">Battle in progress.</div>)}
         {squad.backToShip && <Link className="btn wide banner" to={`/squads/${squad.id}/ship`}>Back to the Ship: to-do list</Link>}
         {!squad.started && mine && (
           <p className="muted small">Starting company: empty equipment slots refund 1 credit each until you confirm the squad at the bottom of the page.</p>
