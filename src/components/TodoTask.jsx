@@ -10,7 +10,7 @@ import { findTrait } from '../data/traits.js';
 import {
   LEVELS, LIGHTSABER_FORMS, choosable, diceRange, formLevel, parseFormTrait, rollTraitTable, todoSpec, traitTable,
 } from '../data/todos.js';
-import { buyableGear, gearProblems, removedGear } from '../gear.js';
+import { buyableGear, gearProblems } from '../gear.js';
 import { maxShift, promotionOptions } from '../promotions.js';
 import { unitStats } from '../squads.js';
 
@@ -227,24 +227,27 @@ function OtherTask({ unit, onDone }) {
 }
 
 // After a promotion: swap gear for anything the new unit type can carry, at no cost.
-// Gear taken off goes to the squad's armoury, as it does on the squad page.
+// Gear taken off is discarded (confirmed by Alex); it doesn't go to the armoury.
 function RegearTask({ unit, squad, onDone }) {
   const st = unitStats(unit, squad.faction);
   const allowed = buyableGear(unit, st);
   const equipment = unit.equipment ?? [];
-  const [value, setValue] = useState(() => equipment.filter(g => allowed.includes(g)));
+  // Start again from the unit's gear whenever it changes elsewhere (e.g. moved to the armoury on the
+  // unit card), so saving never puts back an item that has left the unit.
+  const key = equipment.join('|');
+  const [picked, setPicked] = useState(null);
+  const value = picked?.key === key ? picked.value : equipment.filter(g => allowed.includes(g));
+  const setValue = v => setPicked({ key, value: v });
   const { notAllowed, overSlots } = gearProblems(unit, st);
   const tooMany = gearProblems({ ...unit, equipment: value }, st).overSlots;
 
   return (
     <div className="stack">
-      <div className="callout small"><b>Free of charge.</b> Swap any gear now without spending credits. Anything taken off goes to the armoury.</div>
+      <div className="callout small"><b>Free of charge.</b> Swap any gear now without spending credits. Anything taken off is discarded, not sent to the armoury.</div>
       {notAllowed.length > 0 && <div className="warn small">A {unit.type} can't carry: {notAllowed.join(', ')}.</div>}
       {overSlots && <div className="warn small">Their gear needs more slots than a {unit.type} has ({st.eqSlots}).</div>}
       <EquipmentPicker allowed={allowed} slots={st.eqSlots} value={value} onChange={setValue} />
-      <button className="btn" disabled={tooMany} onClick={() => onDone({ equipment: value }, {
-        armoury: [...(squad.armoury ?? []), ...removedGear(equipment, value)],
-      })}>Save gear (free)</button>
+      <button className="btn" disabled={tooMany} onClick={() => onDone({ equipment: value })}>Save gear (free)</button>
     </div>
   );
 }

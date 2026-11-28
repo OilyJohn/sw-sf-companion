@@ -26,14 +26,3 @@ export function gearProblems(unit, st) {
     overSlots: slotsUsed(equipment) > st.eqSlots,
   };
 }
-
-// Items in `before` that aren't in `after`, counting duplicates.
-export function removedGear(before, after) {
-  const left = [...after];
-  return before.filter(g => {
-    const i = left.indexOf(g);
-    if (i === -1) return true;
-    left.splice(i, 1);
-    return false;
-  });
-}
